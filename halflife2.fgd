@@ -1,10 +1,15 @@
 //====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
-// Purpose: Half-Life 2 game definition file (.fgd) 
+// Purpose: Entropy Zero 2 Mod (.fgd) - John Richardson 2018
 //
 //=============================================================================
 
 @include "base.fgd"
+@include "halloween.fgd"
+@include "flaregun.fgd"
+@include "bullsquid.fgd"
+@include "beast.fgd"
+@include "wilson.fgd"
 
 //-------------------------------------------------------------------------
 //
@@ -88,11 +93,28 @@
 
 @BaseClass = AlyxInteractable
 [
-	// Outputs
-	output OnAlyxStartedInteraction(void) : "Fired when Alyx begins to interact with this entity."
-	output OnAlyxFinishedInteraction(void) : "Fired when Alyx has finished interacting with this entity."
+	Hacked(choices) : "Start Hacked" : "No" : "Makes this NPC start as if Alyx had hacked it. This causes the NPC to switch sides and might give it a different color." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
 
-	input InteractivePowerDown(void) : "Shutdown this target."
+	// Outputs
+	output OnAlyxStartedInteraction(void) : "Fires when Alyx begins to interact with this entity."
+	output OnAlyxFinishedInteraction(void) : "Fires when Alyx has finished interacting with this entity."
+
+	input InteractivePowerDown(void) : "Shuts down this target."
+	input Hack(void) : "Hacks this entity as if Alyx interacted with it."
+]
+
+@BaseClass = EZVariable
+[
+	EZvariant(choices) : "Variant" : 0 : "Sets this NPC's 'variant', e.g. slimy zombies that create radioactive puddles." =
+	[
+		0 : "Default"
+		1 : "Xen"
+		2 : "Radioactive/Slimy"
+	]
 ]
 
 @BaseClass base(Targetname, Origin, Angles, Global) = CombineBallSpawners
@@ -371,6 +393,7 @@
 	[
 		65536 :  "Friendly" : 0
 		131072 : "Use prop_physics collision rules"	: 0
+		262144 : "Follow player when idle"	: 0
 	]
 
 	startburied(choices) : "Start Buried" : "No" =
@@ -496,7 +519,7 @@
 	EffectRadius(integer) : "Effect Radius" : 1000 : "Radius of the thumper's sound. EPISODIC ONLY."
 ]
 
-@NPCClass base(BaseNPC) studio("models/antlion.mdl") sphere() = npc_antlion :
+@NPCClass base(BaseNPC, EZVariable) studio("models/antlion.mdl") sphere() = npc_antlion :
 	"Antlions will run away from ai_sound, type: Thumper."
 [
 	startburrowed(choices) : "Start Burrowed" : "No" =
@@ -527,6 +550,13 @@
 		1 : "Yes"
 	]
 
+	model(studio) : "Override Model"
+	noglow(choices) : "Glowing Butt"	: 0 =
+	[
+		0 : "Glow"
+		1 : "Don't glow"
+	]
+	
 	input Unburrow(void) : "Unburrow from the ground"
 	input Burrow(void) : "Burrow into the ground"
 	input BurrowAway(void) : "Burrow into the ground and remove the antlion"
@@ -574,6 +604,12 @@
 	]
 
 	shovetargets(string) : "Shove Targets" : ""
+	
+	xen(choices) : "Xen Antlion" : "No" =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
 
 	// Inputs
 	input Unburrow(void) : "Unburrow from the ground"
@@ -635,7 +671,7 @@
 [
 ]
 
-@BaseClass base(BaseNPC) = BaseHeadcrab
+@BaseClass base(BaseNPC, EZVariable) = BaseHeadcrab
 [
 	startburrowed(choices) : "Start burrowed" : "No" =
 	[
@@ -648,7 +684,6 @@
 		65536  :  "Start hidden" : 0
 		131072 :  "Start hanging from ceiling" : 0
 	]
-
 
 	input StartHangingFromCeiling(void) : "Start hanging from ceiling."
 	input DropFromCeiling(void) : "Drop if hanging from ceiling."
@@ -789,10 +824,12 @@
 	additionalequipment(choices) : "Weapons" : "0" =
 	[
 		"weapon_smg1" : "SMG1"
+		"weapon_smg2" : "SMG2"
 		"weapon_ar2" : "AR2"
 		"weapon_stunstick" : "Stun Stick"
 		"weapon_crowbar" : "Crow Bar"
 		"weapon_shotgun" : "Shotgun"
+		"weapon_crossbow" : "Crossbow"
 		"weapon_beerbottle" : "Beer Bottle"
 		"weapon_beerbottle2" : "Beer Bottle2"
 		"weapon_rpg" : "RPG"
@@ -818,6 +855,8 @@
 		1 : "Downtrodden"
 		2 : "Refugee"
 		3 : "Rebel"
+		5 : "Rebel Brute"
+		6 : "Aperture"
 		4 : "Unique"
 	]
 
@@ -901,9 +940,11 @@
 	[
 		"weapon_pistol" : "Pistol"
 		"weapon_smg1" : "SMG1"
+		"weapon_smg2" : "SMG2"
 		"weapon_stunstick" : "Stun Stick"
 		"weapon_shotgun" : "Shotgun"
 		"weapon_ar2" : "AR2"
+		"weapon_crossbow" : "Crossbow"
 		"0" : "Nothing"
 	]
 
@@ -921,15 +962,20 @@
 		"weapon_ar2" : "AR2"
 		"weapon_shotgun" : "Shotgun"
 		"weapon_smg1" : "SMG1"
+		"weapon_smg2" : "SMG2"
+		"weapon_crossbow" : "Crossbow"
 		"weapon_stunstick" : "Stun Stick"
 		"0" : "Nothing"
 	]
 
 	spawnflags(Flags) = 
 	[
-		65536 :  "Start LookOff" : 0
+		65536   : "Start LookOff" : 0
 		131072	: "Don't drop grenades" : 0
 		262144  : "Don't drop ar2 alt fire (elite only) " : 0
+		524288  : "Can Join Player Squad" : 1
+		1048576 : "Regenerate Health" : 1
+		2097152 : "Prevent manhack toss" : 0
 	]
 
 	NumGrenades(choices) : "Number of Grenades" : "5" =
@@ -942,6 +988,13 @@
 		"5" : "5"
 		"999999" : "Unlimited"
 	]
+	
+	manhacks(Choices) : "Number of Manhacks" : 0 =
+	[
+		0 : "None"
+		1 : "1"
+		2 : "2"
+	]
 
 	// Inputs
 	input LookOn(void) : "Look normally"	
@@ -949,12 +1002,27 @@
 	input StartPatrolling(void) : "Patrol whenever I'm idle or alert."
 	input StopPatrolling(void) : "Stop patrolling when I'm idle or alert."
 	input ThrowGrenadeAtTarget(target_destination) : "Throw a grenade at the specified target."
+	
+	input DisableManhackToss(void) : "Disables manhack toss"
+	input EnableManhackToss(void) : "Enables manhack toss (which had been disabled by the spawnflag or input)"
+	input DeployManhack(void) : "Deploys a manhack immediately if one is available."
+	input AddManhacks(integer) : "Adds to the number of manhacks this NPC has available."
+	input SetManhacks(integer) : "Sets the number of manhacks this NPC has available."
+
+	// Outputs
+	output OutManhack(ehandle) : "Fired the moment when this NPC spawns a manhack. Passes the manhack."
 ]
 
 
-@NPCClass base(BaseCombine) studio("models/Combine_Soldier.mdl") = npc_combine_s : "Combine Soldier"
+@NPCClass base(BaseCombine, TalkNPC) studio("models/Combine_Soldier.mdl") = npc_combine_s : "Combine Soldier"
 [
 	input Assault(string) : "Start an assault. Parameter passed in should be the name of the rally point."
+	input SetCommandable(void) : "Make a previously uncommandable Combine soldier commandable"
+	input SetNonCommandable(void) : "Make a previously commandable Combine soldier uncommandable"
+	input AddToPlayerSquad(void) : "Add to player squad, instantly."
+	input RemoveFromPlayerSquad(void) : "Remove from player squad, instantly."
+	input SetElite(bool) : "Sets whether we are an elite. Model will not change, but grenades will transform into energy balls or vice versa."
+	output OnPlayerUse(void) : "Fires when a player +USEs the vortigaunt."
 
 	model(choices) : "Model" : "models/combine_soldier.mdl" : "Regular Soldier" = 
 	[
@@ -968,6 +1036,15 @@
 		"0" : "Normal Tactics"
 		"1" : "Pressure the enemy (Keep advancing)"
 		"2" : "Pressure until within 30ft, then normal"
+	]
+	
+	spawnflags(Flags) = 
+	[
+		65536   : "Start LookOff" : 0
+		131072	: "Don't drop grenades" : 0
+		262144  : "Don't drop ar2 alt fire (elite only) " : 0
+		524288  : "Can Join Player Squad" : 1
+		1048576 : "Regenerate Health" : 1
 	]
 	
 	usemarch(choices) : "Walk Easy" : "0" : "When true, will use a variety of more casual walking animations instead of the standard walk. For use in crowds. WARNING: this animation only has a north component. For use under very special circumstances only." =
@@ -1565,30 +1642,38 @@
 [
 ]
 
-@NPCClass base(BaseNPC) studio("models/Zombie/fast.mdl") = npc_fastzombie : "Fast Zombie"
+@BaseClass base(BaseNPC, EZVariable) = BaseZombie
+[
+	model(studio) : "Override Model"
+	torsomodel(studio) : "Override Torso Model"
+	legsmodel(studio) : "Override Legs Model"
+]
+
+@NPCClass base(BaseZombie) studio("models/Zombie/fast.mdl") = npc_fastzombie : "Fast Zombie"
 [
 	input AttachToVehicle(string) : "Attach to a specified vehicle entity"
+	livingtorsomodel(studio) : "Override Living Torso Model" : "" : "(Torso model is for gibs)"
 ]
 
-@NPCClass base(BaseNPC) studio("models/Zombie/Fast_torso.mdl") = npc_fastzombie_torso : "Fast Zombie Torso"
+@NPCClass base(BaseZombie) studio("models/Zombie/Fast_torso.mdl") = npc_fastzombie_torso : "Fast Zombie Torso"
 [
 
 ]
 
-@NPCClass base(BaseNPC) studio("models/Zombie/Classic.mdl") = npc_zombie : "Zombie"
+@NPCClass base(BaseZombie) studio("models/Zombie/Classic.mdl") = npc_zombie : "Zombie"
 [
 ]
 
-@NPCClass base(BaseNPC) studio("models/Zombie/Classic_torso.mdl") = npc_zombie_torso : "Zombie Torso"
+@NPCClass base(BaseZombie) studio("models/Zombie/Classic_torso.mdl") = npc_zombie_torso : "Zombie Torso"
 [
 ]
 
-@NPCClass base(BaseNPC) studio("models/Zombie/zombie_soldier.mdl") = npc_zombine : "Combine Soldier Zombie"
+@NPCClass base(BaseZombie) studio("models/Zombie/zombie_soldier.mdl") = npc_zombine : "Combine Soldier Zombie"
 [
 	input StartSprint(void) : "Forces the zombine to sprint."
 	input PullGrenade(void) : "Forces the zombine to pull a grenade."
 ]
-@NPCClass base(BaseNPC) studio("models/Zombie/Poison.mdl") = npc_poisonzombie :
+@NPCClass base(BaseZombie) studio("models/Zombie/Poison.mdl") = npc_poisonzombie :
 	"A bloated, disgusting, fluid-spurting zombie created by a poison headcrab."
 [
 	crabcount(choices) : "Crabs in nest" : 3 =
@@ -1734,9 +1819,12 @@
 	additionalequipment(choices) : "Weapons" : "weapon_pistol" =
 	[
 		"weapon_pistol" : "Pistol"
-		"weapon_smg1"  : "SMG1"
+		"weapon_smg1" : "SMG1"
+		"weapon_smg2" : "SMG2"
 		"weapon_stunstick"  : "Stun Stick"
 		"weapon_shotgun"  : "Shotgun"
+		"weapon_ar2" : "AR2"
+		"weapon_crossbow" : "Crossbow"
 		"0"  : "Nothing"
 	]
 
@@ -1786,6 +1874,7 @@
 	[
 		"weapon_annabelle" : "Annabelle"
 		"weapon_smg1" : "SMG1"
+		"weapon_smg2" : "SMG2"
 		"weapon_ar2" : "AR2"
 		"weapon_stunstick" : "Stun Stick"
 		"weapon_crowbar" : "Crow Bar"
@@ -1995,6 +2084,7 @@
 		"weapon_ar2" : "AR2"
 		"weapon_shotgun" : "Shotgun"
 		"weapon_smg1" : "SMG1"
+		"weapon_smg2" : "SMG2"
 		"weapon_stunstick" : "Stun Stick"
 		"weapon_annabelle"	:"Grigori's Shotgun"
 		"0" : "Nothing"
@@ -2203,6 +2293,24 @@
 	// Outputs
 	output AtTarget(void) : "Fires when NPC reaches this target"
 	output LeaveTarget(void) : "Fires when NPC leaves this target"
+]
+
+@PointClass base(Targetname) iconsprite("editor/scripted_sound.vmt")  = scripted_sound : "Makes a target entity emit a sound directly, which allows lip syncing, interruption from death or other lines, etc. at the cost of most forms of control. Not exclusive to NPCs."
+[
+    message(sound) : "Sound Name" : : "The sound to play. Supports Game Sounds and direct filenames."
+    target(target_destination) : "Target Entity" : : "The entity that should play the sound."
+    
+    GrabAll(choices) : "Grab All" : 0 : "Makes all entities play the sound instead of just one." =
+    [
+        0 : "No"
+        1 : "Yes"
+    ]
+
+    // Inputs
+    input PlaySound(void) : "Starts the sound."
+    input PlaySoundOnEntity(target_destination) : "Plays the sound on the specified entity."
+    input StopSound(void) : "Stops the sound if it is playing."
+    input SetSound(string) : "Sets the sound."
 ]
 
 @PointClass base(Targetname) iconsprite("editor/ai_relationship.vmt") sphere() = ai_relationship : 
@@ -2702,9 +2810,10 @@
 	input Activate( void ) : "Begin acting busy"
 	input Deactivate( void ) : "Cease acting busy"
 	input SetBusySearchRange( float ) : "Update the busy search range for all actors."
-	input ForceNPCToActBusy( string ) : "Force an NPC to act busy. Takes parameters, separated by spaces: <Targetname> <hint node targetname> <optional:teleport> <optional:$customactivityorsequence> <maximum time to actbusy>. If no hint node targetname is specified, it'll search for a random one. If no max time is specified, it'll use the default. Specifying 0 as the max time will make the NPC act busy until disturbed. If the optional teleport parameter is specified, the NPC will teleport to the act busy point. A custom move animation can be specified by prepending $ to the name of it. i.e. $ACT_RUN will make the NPC Run. Sequence names can be used instead of activities."
-	input ForceThisNPCToActBusy( string ) : "Force an NPC outputted from another entity to act busy. (only usable from an output that specifies an entity)"
-	input ForceThisNPCToLeave( string ) : "Force an NPC outputted from another entity to find a HINT_NPC_EXIT_POINT hintnode and vanish."
+	input ForceNPCToActBusy( target_destination ) : "Force an NPC to act busy. Takes parameters, separated by spaces: <Targetname> <hint node targetname> <optional:teleport> <optional:$customactivityorsequence> <maximum time to actbusy>. If no hint node targetname is specified, it'll search for a random one. If no max time is specified, it'll use the default. Specifying 0 as the max time will make the NPC act busy until disturbed. If the optional teleport parameter is specified, the NPC will teleport to the act busy point. A custom move animation can be specified by prepending $ to the name of it. i.e. $ACT_RUN will make the NPC Run. Sequence names can be used instead of activities."
+	input ForceThisNPCToActBusy( target_destination ) : "Force an NPC outputted from another entity to act busy. (only usable from an output that specifies an entity)"
+	input ForceThisNPCToLeave( target_destination ) : "Force an NPC outputted from another entity to find a HINT_NPC_EXIT_POINT hintnode and vanish."
+	input ForceThisNPCToStopBusy( target_destination ) : "Forces the specified NPC to stop acting busy. This is useful when an ai_goal_actbusy controls several NPCs and you only want one of them to stop."
 
 	// Outputs
 	output OnNPCStartedBusy(string) : "Fired when an NPC targeted by this goal starts an ActBusy animation."
@@ -3572,7 +3681,7 @@
 @PointClass base(Weapon) studio("models/spore.mdl") = weapon_bugbait: "Bug bait" []
 @PointClass base(Weapon) studio("models/weapons/W_Alyx_Gun.mdl") = weapon_alyxgun: "Alyx Gun" []
 @PointClass base(Weapon) studio("models/weapons/W_annabelle.mdl") = weapon_annabelle: "Annabelle (Grigori)" []
-
+@PointClass base(Weapon) studio("models/manhack.mdl") = weapon_manhacktoss: "Deployable Manhack" []
 
 @SolidClass base(Trigger) = trigger_rpgfire :
 	"A volumetric trigger that triggers whenever an RPG is fired within it."
@@ -3742,8 +3851,6 @@
 	// Inputs
 	input ModifySpeed(float) : "Modifies player speed by X ammount."
 ]
-
-
 
 //-------------------------------------------------------------------------
 //
@@ -4008,152 +4115,51 @@
 	
 	AchievementEvent(choices) : "Achievement Event" : 0 : "Named event is sent to the achievement system when this entity receives a 'FireEvent' input." =
 	[
-		"ACHIEVEMENT_EVENT_HL2_HIT_CANCOP_WITHCAN"				: "[HL2] Hit the trashcan cop with the can."
-		"ACHIEVEMENT_EVENT_HL2_PUT_CANINTRASH"					: "[HL2] Put the can in the trash."
-		"ACHIEVEMENT_EVENT_HL2_ESCAPE_APARTMENTRAID"			: "[HL2] Escape the apartment block raid."
-		"ACHIEVEMENT_EVENT_HL2_BREAK_MINITELEPORTER"			: "[HL2] Break the mini-teleporter in Kleiner's lab."
-		"ACHIEVEMENT_EVENT_HL2_GET_CROWBAR"						: "[HL2] Get the crowbar."
-		"ACHIEVEMENT_EVENT_HL2_GET_AIRBOAT"						: "[HL2] Get the Airboat"
-		"ACHIEVEMENT_EVENT_HL2_GET_AIRBOATGUN"					: "[HL2] Get the airboat's mounted gun."
-		"ACHIEVEMENT_EVENT_HL2_FIND_VORTIGAUNTCAVE"				: "[HL2] Discover the hidden singing vortigaunt cave in chapter Water Hazard."
-		"ACHIEVEMENT_EVENT_HL2_KILL_CHOPPER"					: "[HL2] Destroy the hunter-chopper in Half-Life 2."
-		"ACHIEVEMENT_EVENT_HL2_FIND_HEVFACEPLATE"				: "[HL2] Find the HEV Suit Charger faceplate in Eli's scrapyard."
-		"ACHIEVEMENT_EVENT_HL2_GET_GRAVITYGUN"					: "[HL2] Get the Gravity Gun in Black Mesa East"
-		"ACHIEVEMENT_EVENT_HL2_MAKEABASKET"						: "[HL2] Make a basket in Eli's scrapyard."
-		"ACHIEVEMENT_EVENT_HL2_BEAT_RAVENHOLM_NOWEAPONS_START"	: "[HL2] Beat Ravenholm Gravgun only. (Start)."
-		"ACHIEVEMENT_EVENT_HL2_BEAT_RAVENHOLM_NOWEAPONS_END"	: "[HL2] Beat Ravenholm Gravgun only. (End)."
-		"ACHIEVEMENT_EVENT_HL2_BEAT_CEMETERY"					: "[HL2] Escort Gregori safely through the church cemetery."
-		"ACHIEVEMENT_EVENT_HL2_KILL_ENEMIES_WITHCRANE"			: "[HL2] Kill 3 enemies using the crane."
-		"ACHIEVEMENT_EVENT_HL2_PIN_SOLDIER_TOBILLBOARD"			: "[HL2] Pin the soldier to the billboard with the crossbow in chapter Highway 17."
-		"ACHIEVEMENT_EVENT_HL2_KILL_ODESSAGUNSHIP"				: "[HL2] Defend Little Odessa from the gunship attack."
-		"ACHIEVEMENT_EVENT_HL2_BEAT_DONTTOUCHSAND"				: "[HL2] Cross the antlion beach in chapter Sandtraps without touching the sand."
-		"ACHIEVEMENT_EVENT_HL2_ENTER_NOVAPROSPEKT"				: "[HL2] Get inside Nova Prospekt"
-		"ACHIEVEMENT_EVENT_HL2_BEAT_TURRETSTANDOFF2"			: "[HL2] Survive the second turret standoff in the prison."
-		"ACHIEVEMENT_EVENT_HL2_FOLLOWFREEMAN"					: "[HL2] Gain command of a squad of rebels in the uprising"
-		"ACHIEVEMENT_EVENT_HL2_BEAT_TOXICTUNNEL"				: "[HL2] Get through the toxic tunnel under City 17 in Half-Life 2."
-		"ACHIEVEMENT_EVENT_HL2_BEAT_PLAZASTANDOFF"				: "[HL2] Survive the Generator Plaza standoff in chapter Anticitizen One."
-		"ACHIEVEMENT_EVENT_HL2_KILL_ALLC1709SNIPERS"				: "[HL2] Kill all of the snipers in City 17."
-		"ACHIEVEMENT_EVENT_HL2_BEAT_SUPRESSIONDEVICE"			: "[HL2] Shut down the supression device by disabling its generators."
-		"ACHIEVEMENT_EVENT_HL2_BEAT_C1713STRIDERSTANDOFF"			: "[HL2] Survive the rooftop strider battle in the ruins of City 17."
-		"ACHIEVEMENT_EVENT_HL2_BEAT_GAME"						: "[HL2] Destroy the Citadel's reactor core (Beat Game)."
-
-		"ACHIEVEMENT_EVENT_HL2_GMAN_KLEINERSLAB"				: "[HL2] G-Man: trainstation_05 on Kleiner's Monitor"
-		"ACHIEVEMENT_EVENT_HL2_GMAN_TRAINCAR"					: "[HL2] G-Man: canals_01 on TV in vort train car"
-		"ACHIEVEMENT_EVENT_HL2_GMAN_REDBARN"					: "[HL2] G-Man: canals_06 at the red barn"
-		"ACHIEVEMENT_EVENT_HL2_GMAN_OUTDOORMONITOR"				: "[HL2] G-Man: canals_06 on giant outdoor monitor"
-		"ACHIEVEMENT_EVENT_HL2_GMAN_CATWALK"					: "[HL2] G-Man: canals_12 on catwalk"
-		"ACHIEVEMENT_EVENT_HL2_GMAN_DAM"					: "[HL2] G-Man: canals_13 to the left of the dam"
-		"ACHIEVEMENT_EVENT_HL2_GMAN_TRAINTRACKS"				: "[HL2] G-Man: town_05 at the end of the tracks"
-		"ACHIEVEMENT_EVENT_HL2_GMAN_ODESSA"					: "[HL2] G-Man: coast_03 odessa meeting"
-		"ACHIEVEMENT_EVENT_HL2_GMAN_PRISONMONITOR"				: "[HL2] G-Man: prison_02 control room monitor"
-		"ACHIEVEMENT_EVENT_HL2_GMAN_FOYERTV"					: "[HL2] G-Man: c17_02 on TV in the destroyed foyer"
+		"ACHIEVEMENT_EVENT_EZ_HULA_01"      : "[EZ] Hula Doll: Doll 1"
+		"ACHIEVEMENT_EVENT_EZ_HULA_02"      : "[EZ] Hula Doll: Doll 2"
+		"ACHIEVEMENT_EVENT_EZ_HULA_03"      : "[EZ] Hula Doll: Doll 3"
+		"ACHIEVEMENT_EVENT_EZ_HULA_04"      : "[EZ] Hula Doll: Doll 4"
+		"ACHIEVEMENT_EVENT_EZ_HULA_05"      : "[EZ] Hula Doll: Doll 5"
+		"ACHIEVEMENT_EVENT_EZ_HULA_06"      : "[EZ] Hula Doll: Doll 6"
+		"ACHIEVEMENT_EVENT_EZ_HULA_07"      : "[EZ] Hula Doll: Doll 7"
 		
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_KLEINERSLAB"			: "[HL2] Lamda: Secret entrance to Kleiner's lab in trainstation_05"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_CANALSSTATION"		: "[HL2] Lamda: canals_01 building by tracks"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_VENTCRAWL"			: "[HL2] Lamda: canals_01 vent crawl"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_CANALSTUNNEL"			: "[HL2] Lamda: canals_01a tunnel"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_SEWERGRATE"			: "[HL2] Lamda: canals_02 below grate in sewer corridor"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_STEAMPIPE"			: "[HL2] Lamda: canals_03 under steam pipe"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_CURVEDROOM"			: "[HL2] Lamda: canals_05 on second level of curved room"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_SHANTYTOWN"			: "[HL2] Lamda: canals_05 before shanty town"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_TUNNELLADDER"			: "[HL2] Lamda: canals_06 on overhead metal walkway in tunnel"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_REDBARN"			: "[HL2] Lamda: canals_06 at the red barn"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_FLOATINGRAMP"			: "DON'T USE ME [HL2] Lamda: canals_06 outside the pipe at floating ramp puzzle"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_ZOMBIEAMBUSH"			: "[HL2] Lamda: canals_06 outside exploded tanker (zombie ambush)"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_BELOWAPCS"			: "[HL2] Lamda: canals_07 in the wall below apcs"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_COUNTERWEIGHT"		: "[HL2] Lamda: canals_08 in counterweighted basket"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_RAILWAYBRIDGE"		: "[HL2] Lamda: canals_08 behind railway bridge piling"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_TUNNELPLATFORMS"		: "[HL2] Lamda: canals_09 on wooden platforms in tunnel"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_BANKEDCANAL"			: "[HL2] Lamda: canals_10 up banked side of canals passage"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_CANALWALL"			: "[HL2] Lamda: canals_10 in wall opening after canals passage"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_CHANNELSPLIT"			: "[HL2] Lamda: canals_12 right side of split channel"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_BMEDOCK"				: "[HL2] Lamda: eli_01 Black Mesa East dock"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_GENERATORS"			: "[HL2] Lamda: town_01 through ductwork behind generators"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_CARCRUSHERARENA"		: "[HL2] Lamda: town_01 behind fence in car-crusher arena"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_RAVENHOLMATTIC"		: "[HL2] Lamda: town_01a in attic opposite map exit"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_MINETUNNELEXIT"		: "[HL2] Lamda: town_05 tunnel exit from ravenholm mine"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_COASTSHACK"			: "[HL2] Lamda: coast_01 shack after the buggy jump"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_POISONSHACK"			: "[HL2] Lamda: coast_03 poison headcrab shack"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_GUNSHIPVAN"			: "[HL2] Lamda: coast_04 broken down van after the gunship"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_SUICIDECITIZEN"		: "[HL2] Lamda: coast_05 suicide citizen's gas tank cache"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_RAILROADSHACK"		: "[HL2] Lamda: coast_07 fenced off area outside of town"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_COASTABOVEBATTERY"		: "[HL2] Lamda: coast_09 above the bathroom in the battery puzzle building"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_SANDSHACK"			: "[HL2] Lamda: coast_11 elevated shack after the board bridge"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_GMANCACHE"			: "[HL2] Lamda: prison_02 in the boarded up area of the gman sighting"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_CELLCACHE"			: "[HL2] Lamda: prison_03 in the prison cell"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_POISONLAUNDRY"		: "[HL2] Lamda: prison_05 in the laundry utility room"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_SODAMACHINE"			: "[HL2] Lamda: prison_06 on top of the soda machine"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_STREETWARDOGWALL"		: "[HL2] Lamda: c17_02 next to first Combine wall"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_STREETWARSHACK"		: "[HL2] Lambda: c17_04 inside shack before metrocop holdout"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_STREETWARFENCE"		: "[HL2] Lamda: c17_05 behind fence before end of map"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_FREEWAYTUNNEL"		: "[HL2] Lamda: c17_06a at start of freeway tunnel"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_DRAWBRIDGE"			: "[HL2] Lamda: c17_06b before second drawbridge"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_PLAZAFENCE"			: "[HL2] Lamda: c17_06b behind fence before end of map"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_SEWERSCATWALKS"		: "[HL2] Lamda: c17_08 lowest catwalk at sewer entrance"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_POISONZOMBIEALCOVE"	: "[HL2] Lamda: c17_08 wall cubby next to poison zombie"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_PIPEHOPTUNNEL"		: "[HL2] Lamda: c17_08 end of pipe hop tunnel by poison zombie"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_EXITCATWALK"		: "[HL2] Lamda: c17_08 side of building next to hallway leading to level exit"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_ENDOFC1712B"			: "[HL2] Lamda: c17_12b at map exit"
-		"ACHIEVEMENT_EVENT_HL2_LAMDACACHE_WHITEVAN"				: "[HL2] Lamda: c17_13 white van in underground garage"
+		"ACHIEVEMENT_EVENT_EZ_NXTGEN_01"      : "[EZ] LG Tag: 1"
+		"ACHIEVEMENT_EVENT_EZ_NXTGEN_02"      : "[EZ] LG Tag: 2"
+		"ACHIEVEMENT_EVENT_EZ_NXTGEN_03"      : "[EZ] LG Tag: 3"
+		"ACHIEVEMENT_EVENT_EZ_NXTGEN_04"      : "[EZ] LG Tag: 4"
+		"ACHIEVEMENT_EVENT_EZ_NXTGEN_05"      : "[EZ] LG Tag: 5"
+		"ACHIEVEMENT_EVENT_EZ_NXTGEN_06"      : "[EZ] LG Tag: 6"
+		"ACHIEVEMENT_EVENT_EZ_NXTGEN_07"      : "[EZ] LG Tag: 7"
 		
-
-
-		"ACHIEVEMENT_EVENT_EP1_BEAT_MAINELEVATOR"						: "[EP1] Reach the bottom of the main elevator shaft."
-		"ACHIEVEMENT_EVENT_EP1_BEAT_CITADELCORE_START"						: "[EP1] Contain the citadel core. (start)"
-		"ACHIEVEMENT_EVENT_EP1_BEAT_CITADELCORE_END"						: "[EP1] Contain the citadel core. (end)"
-		"ACHIEVEMENT_EVENT_EP1_BEAT_CITADELCORE"						: "[EP1] Contain the citadel core."
-		"ACHIEVEMENT_EVENT_EP1_BEAT_CITADELCORE_NOSTALKERKILLS"					: "[EP1] Contain the citadel core with no stalker kills"
-		"ACHIEVEMENT_EVENT_EP1_BEAT_GARAGEELEVATORSTANDOFF"					: "[EP1] Survive long enough to get on the elevator in the parking garage."
-		"ACHIEVEMENT_EVENT_EP1_BEAT_HOSPITALATTICGUNSHIP"					: "[EP1] Destroy the gunship in the hospital attic."
-		"ACHIEVEMENT_EVENT_EP1_BEAT_CITIZENESCORT_NOCITIZENDEATHS_START"	: "[EP1] Don't let any citizens die when escorting them to the escape train (start)."
-		"ACHIEVEMENT_EVENT_EP1_BEAT_CITIZENESCORT_NOCITIZENDEATHS_END"		: "[EP1] Don't let any citizens die when escorting them to the escape train (end)."
-		"ACHIEVEMENT_EVENT_EP1_BEAT_GAME_NOHEALTHPICKUPS_START"				: "[EP1] Beat EP1 without picking up any health. (start)"
-		"ACHIEVEMENT_EVENT_EP1_BEAT_GAME_NOHEALTHPICKUPS_END"				: "[EP1] Beat EP1 without picking up any health. (end)"
-
-		"ACHIEVEMENT_EVENT_EP1_START_GAME"						: "[EP1] Began EP1 (for tracking One Free Bullet)"
-		"ACHIEVEMENT_EVENT_EP1_BEAT_GAME"						: "[EP1] Beat EP1 (for tracking One Free Bullet)"
-
-
-
-		"ACHIEVEMENT_EVENT_EP2_BEAT_ANTLIONINVASION"				: "[EP2] Hold off the antlion invasion inside the mine shaft"
-		"ACHIEVEMENT_EVENT_EP2_BEAT_ANTLIONGUARDS"					: "[EP2] Defeat both antlion guards outside the White Forest"
-		"ACHIEVEMENT_EVENT_EP2_BEAT_HUNTERAMBUSH"					: "[EP2] Survive the Hunter ambush at the radio tower."
-
-		"ACHIEVEMENT_EVENT_EP2_KILL_CHOPPER_NOMISSES_START"					: "[EP2] Start of the chopper arena battle."
-		"ACHIEVEMENT_EVENT_EP2_KILL_CHOPPER_NOMISSES_END"					: "[EP2] End of the chopper arena battle."
-
-		"ACHIEVEMENT_EVENT_EP2_KILL_COMBINECANNON"					: "[EP2] Destroy the Combine Cannon in the junkyard."
-		"ACHIEVEMENT_EVENT_EP2_BEAT_RACEWITHDOG"					: "[EP2] Beat DOG in the race to the White Forest."
-		"ACHIEVEMENT_EVENT_EP2_BEAT_ROCKETCACHEPUZZLE"				: "[EP2] Unlock the Rocket Launcher lambda cache in chapter Under The Radar."
-		"ACHIEVEMENT_EVENT_EP2_BEAT_WHITEFORESTINN"					: "[EP2] Survive the invasion at White Forest Inn"
-		"ACHIEVEMENT_EVENT_EP2_PUT_ITEMINROCKET"					: "[EP2] Send <some object from chapter 1> into space."
-		"ACHIEVEMENT_EVENT_EP2_BEAT_MISSILESILO2"					: "[EP2] Secure the launch doors on missile silo 2."
-		"ACHIEVEMENT_EVENT_EP2_BEAT_GAME" 						: "[EP2] Save the missile silo from the Combine offensive."
-		"ACHIEVEMENT_EVENT_EP2_BEAT_OUTLAND12_NOBUILDINGSDESTROYED" : "[EP2] Save the missile silo without losing any buildings."
-
-		"ACHIEVEMENT_EVENT_EP2_FIND_RADAR_CACHE"					: "[EP2] Found a radar cache in chapter Under The Radar."
-
-		"ACHIEVEMENT_EVENT_EP2_RADARCACHE_VAN"		: "[EP2] Radar Cache: 09 first van cache"
-		"ACHIEVEMENT_EVENT_EP2_RADARCACHE_RPG"		: "[EP2] Radar Cache: 09 rpg cache"
-		"ACHIEVEMENT_EVENT_EP2_RADARCACHE_SHACK"			: "[EP2] Radar Cache: 09 shack floor board cache"
-		"ACHIEVEMENT_EVENT_EP2_RADARCACHE_CAVE"			: "[EP2] Radar Cache: 10 cave cache"
-		"ACHIEVEMENT_EVENT_EP2_RADARCACHE_HANGING"		: "[EP2] Radar Cache: 10 hanging crate cache"
+		"ACHIEVEMENT_EVENT_EZ_POEM_01"      : "[EZ] Poem Piece: Part 1"
+		"ACHIEVEMENT_EVENT_EZ_POEM_02"      : "[EZ] Poem Piece: Part 2"
+		"ACHIEVEMENT_EVENT_EZ_POEM_03"      : "[EZ] Poem Piece: Part 3"
+		"ACHIEVEMENT_EVENT_EZ_POEM_04"      : "[EZ] Poem Piece: Part 4"
+		"ACHIEVEMENT_EVENT_EZ_POEM_05"      : "[EZ] Poem Piece: Part 5"
+		"ACHIEVEMENT_EVENT_EZ_POEM_06"      : "[EZ] Poem Piece: Part 6"
+		"ACHIEVEMENT_EVENT_EZ_POEM_07"      : "[EZ] Poem Piece: Part 7"
+		"ACHIEVEMENT_EVENT_EZ_POEM_08"      : "[EZ] Poem Piece: Part 8"
+		"ACHIEVEMENT_EVENT_EZ_POEM_09"      : "[EZ] Poem Piece: Part 9"
+		"ACHIEVEMENT_EVENT_EZ_POEM_10"      : "[EZ] Poem Piece: Part 10"
 		
-				
-		"ACHIEVEMENT_EVENT_EP2_WEBCACHE_01"		: "[EP2] Web Cache: ep2_outland_01a underwater cache"
-		"ACHIEVEMENT_EVENT_EP2_WEBCACHE_02"		: "[EP2] Web Cache: ep2_outland_03 grim pinata cache"
-		"ACHIEVEMENT_EVENT_EP2_WEBCACHE_03"		: "[EP2] Web Cache: ep2_outland_03 first arena exit tunnel wall cache"
-		"ACHIEVEMENT_EVENT_EP2_WEBCACHE_04"		: "[EP2] Web Cache: ep2_outland_03 second arena exit tunnel ceiling cache"
-		"ACHIEVEMENT_EVENT_EP2_WEBCACHE_05"		: "[EP2] Web Cache: ep2_outland_03 zombine grenade trap cache"
-		"ACHIEVEMENT_EVENT_EP2_WEBCACHE_06"		: "[EP2] Web Cache: ep2_outland_04 gear cave entry wall cache"
-		"ACHIEVEMENT_EVENT_EP2_WEBCACHE_07"		: "[EP2] Web Cache: ep2_outland_04 gear cave rockfall ceiling cache"
-		"ACHIEVEMENT_EVENT_EP2_WEBCACHE_08"		: "[EP2] Web Cache: ep2_outland_04 gear cave barnacle ceiling cache"
-		"ACHIEVEMENT_EVENT_EP2_WEBCACHE_09"		: "[EP2] Web Cache: ep2_outland_04 gear cave poison crab wall cache"
-
-		"ACHIEVEMENT_EVENT_PORTAL_GET_PORTALGUNS"					: "[PORTAL] Acquire the fully powered Aperture Science Handheld Portal Device."
-		"ACHIEVEMENT_EVENT_PORTAL_KILL_COMPANIONCUBE"					: "[PORTAL] Do whatever it takes to survive."
-		"ACHIEVEMENT_EVENT_PORTAL_ESCAPE_TESTCHAMBERS"					: "[PORTAL] Make the correct party escort submission position decision."
-		"ACHIEVEMENT_EVENT_PORTAL_BEAT_GAME"					: "[PORTAL] Complete Portal."
+		"ACHIEVEMENT_EVENT_EZ_PCAN"				  : "[EZ] Pick up a can"
+		"ACHIEVEMENT_EVENT_EZ_TCAN"				  : "[EZ] Put it in a trashcan"
+		"ACHIEVEMENT_EVENT_EZ_SCHISM"				: "[EZ] Find the reference"
+		"ACHIEVEMENT_EVENT_EZ_SLUCK"				: "[EZ] Suckers Luck"
+		"ACHIEVEMENT_EVENT_EZ_SEATER"				: "[EZ] Sneak Eater"
+		"ACHIEVEMENT_EVENT_EZ_DEXPLOIT"			: "[EZ] Deadly Exploit"
+		"ACHIEVEMENT_EVENT_EZ_KCOP"         : "[EZ] Kindergarten Cop"
+		"ACHIEVEMENT_EVENT_EZ_VDT"				  : "[EZ] Very Dead Tenant"
+		"ACHIEVEMENT_EVENT_EZ_SALIVE"				: "[EZ] Still Alive"
+		"ACHIEVEMENT_EVENT_EZ_MGUN"				  : "[EZ] More Gun"
+		"ACHIEVEMENT_EVENT_EZ_BSJOB"				: "[EZ] Baby Sittin' Job"
+		"ACHIEVEMENT_EVENT_EZ_SOLO"				  : "[EZ] Solo"
+		"ACHIEVEMENT_EVENT_EZ_OUTBREAK"			: "[EZ] OUTBREAK OUTBREAK"
+		"ACHIEVEMENT_EVENT_EZ_VSOUL"				: "[EZ] Vort Soul"
+		"ACHIEVEMENT_EVENT_EZ_OICE"				  : "[EZ] On Ice"
+		"ACHIEVEMENT_EVENT_EZ_PE"           : "[EZ] Plosive Expletive"
+		
+		"ACHIEVEMENT_EVENT_EZ_VVOICE"       : "[EZ] Vague Voices"
 	]
 
 	// Inputs
@@ -4324,6 +4330,24 @@
 	output OnDeath(void) : "Fired when the APC is killed."
 	output OnDamaged(void) : "Fired when the APC is damaged."
 	output OnDamagedByPlayer(void) : "Fired when the APC is damaged by the player."
+]
+
+// --- EZ2
+@PointClass base(BaseDriveableVehicle) studioprop() = prop_vehicle_drivable_apc :
+	"Driveable studiomodel APC."
+[
+	model(studio) : "World model" : "models/vehicles/combine_apc.mdl"
+	vehiclescript(string) :	"Vehicle Script File" : "scripts/vehicles/drivable_apc.txt"
+
+	cannotmove(choices) : "Cannot Move" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	input DisableMove(void) : "Disable APC movement, machine gun and rockets only."
+	input EnableMove(void) : "Enable APC movement."
+	input ForcePlayerOut(void) : "Force the player out of the vehicle."
 ]
 
 @SolidClass base(Targetname, Origin, Angles, EnableDisable) = info_apc_missile_hint :
@@ -4626,7 +4650,7 @@
 	input Disable(void): "Disable the push."
 ]
 
-@NPCClass base(Targetname, Angles, BaseFadeProp, Global) studio("models/antlion_grub.mdl") sphere(fademindist) sphere(fademaxdist) = npc_antlion_grub :
+@NPCClass base(Targetname, Angles, BaseFadeProp, Global, EZVariable) studio("models/antlion_grub.mdl") sphere(fademindist) sphere(fademaxdist) = npc_antlion_grub :
 	"Antlion grub"
 [
 	spawnflags(Flags) = 
@@ -4669,3 +4693,37 @@
 	input SetRadius(vector) : "Sets a new radius and time to interpolate to it(as a vector <Size> <Time in Seconds>)."
 ]
 
+// New weapons for EZ2
+@PointClass base(Weapon) studio("models/weapons/w_pistol.mdl") = weapon_pulsepistol : "Kinetic Pistol" []
+@PointClass base(Weapon) studio("models/weapons/w_slam.mdl") = weapon_slam : "SLAM" []
+@NPCClass base(BaseNPC) studio("models/weapons/w_slam.mdl") = npc_satchel : "Active Remote SLAM"
+[
+	IsAttached(choices) : "Is Attached" : 0 =
+	[
+		0 : "No (Can be picked up, affected by physics)"
+		1 : "Yes (Will not move)"
+	]	
+
+	input Explode( void ) : "This input detonates the SLAM."
+]
+@NPCClass base(BaseNPC) studio("models/weapons/w_slam.mdl") = npc_tripmine : "Active Tripmine SLAM" []
+@PointClass base(Weapon) studio("models/weapons/w_mp5k.mdl") = weapon_smg2 : "SMG2" []
+@PointClass base(Weapon) studio("models/weapons/w_xengrenade.mdl") = weapon_hopwire : "Xen Grenade" []
+
+// Human Error APC
+@PointClass base(BaseDriveableVehicle) studioprop() = prop_vehicle_drivable_apc :
+	"Driveable studiomodel APC."
+[
+	model(studio) : "World model" : "models/vehicles/combine_apc.mdl"
+	vehiclescript(string) :	"Vehicle Script File" : "scripts/vehicles/drivable_apc.txt"
+
+	cannotmove(choices) : "Cannot Move" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	input DisableMove(void) : "Disable APC movement, machine gun and rockets only."
+	input EnableMove(void) : "Enable APC movement."
+	input ForcePlayerOut(void) : "Force the player out of the vehicle."
+]

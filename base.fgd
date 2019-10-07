@@ -2862,7 +2862,7 @@
 	nodeheight(integer) : "NodeHeight"  : 0
 ]
 
-@PointClass base(Targetname, Angles, HintNode) studio("models/editor/node_hint.mdl") color(255 255 255) = info_hint :
+@PointClass base(Targetname, Angles, HintNode) studio("models/editor/node_hint.mdl") frustum(nodeFOV,-1,128,250 250 250,-1) color(255 255 255) = info_hint :
 	"A hint that is not used for navigation. They don't go into the nodegraph, nor do they fall to the ground. Use these to provide " +
 	"some spatial context for NPCs, such as 'look here if you can't find the player' or 'throw rocks at this spot'."
 [
@@ -6380,6 +6380,9 @@
 	// Outputs
 	output OnFlashlightOn(float) 			: "Fired when the player turns on his flashlight. This output has the value of how much energy the player had when this happened [0..1]."
 	output OnFlashlightOff(float) 			: "Fired when the player turns off his flashlight. This output has the value of how much energy the player had when this happened [0..1]."
+	output OnPlayerSendSquad(float)			: "Fired when the player issues a Send command to his squad. This output has the value of how many soldiers are in the player's squad."
+	output OnPlayerRecallSquad(float)		: "Fired when the player issues a Recall command to his squad. This output has the value of how many soldiers are in the player's squad."
+	
 	input RequestPlayerHealth(void) 		: "Requests the current player's health from the proxy. This will fire the PlayerHealth output with the value."
 	output PlayerHealth(integer)			: "The player's current health value."
 	output PlayerMissedAR2AltFire(void)		: "Player fired an AR2 combine ball that didn't kill any enemies."
