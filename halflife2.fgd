@@ -1115,16 +1115,6 @@
 		"weapon_crossbow" : "Crossbow"
 		"0" : "Nothing"
 	]
-
-	spawnflags(Flags) = 
-	[
-		65536 :  "[65536] Start LookOff" : 0
-		131072	: "[131072] Don't drop grenades" : 0
-		262144  : "[262144] Don't drop ar2 alt fire (elite only) " : 0
-		524288  : "Can Join Player Squad" : 1
-		1048576 : "Regenerate Health" : 1
-		2097152 : "Prevent manhack toss" : 0
-	]
 	
 	NumGrenades(choices) : "Number of Grenades" : "5" =
 	[
@@ -1178,14 +1168,6 @@
 @NPCClass base(BaseCombine, TalkNPC) studio() = npc_combine_s : "Combine Soldier"
 [
 	model(choices) : "Model" : "models/combine_soldier.mdl" : "Sets this soldier's model." = 
-	input SetCommandable(void) : "Make a previously uncommandable Combine soldier commandable"
-	input SetNonCommandable(void) : "Make a previously commandable Combine soldier uncommandable"
-	input AddToPlayerSquad(void) : "Add to player squad, instantly."
-	input RemoveFromPlayerSquad(void) : "Remove from player squad, instantly."
-	input SetElite(bool) : "Sets whether we are an elite. Model will not change, but grenades will transform into energy balls or vice versa."
-	output OnPlayerUse(void) : "Fires when a player +USEs the vortigaunt."
-
-	model(choices) : "Model" : "models/combine_soldier.mdl" : "Regular Soldier" = 
 	[
 		"models/combine_soldier.mdl" : "Regular Soldier"
 		"models/combine_soldier_prisonguard.mdl" : "Nova Prospekt Soldier"
@@ -1204,11 +1186,12 @@
 	
 	spawnflags(Flags) = 
 	[
-		65536   : "Start LookOff" : 0
-		131072	: "Don't drop grenades" : 0
-		262144  : "Don't drop ar2 alt fire (elite only) " : 0
-		524288  : "Can Join Player Squad" : 1
-		1048576 : "Regenerate Health" : 1
+		65536 :  "[65536] Start LookOff" : 0
+		131072	: "[131072] Don't drop grenades" : 0
+		262144  : "[262144] Don't drop ar2 alt fire (elite only) " : 0
+		524288  : "[524288] Can Join Player Squad" : 1
+		1048576 : "[1048576] Regenerate Health" : 1
+		2097152 : "[2097152] Prevent manhack toss" : 0
 	]
 	
 	usemarch(choices) : "Walk Easy" : "0" : "When true, will use a variety of more casual walking animations instead of the standard walk. For use in crowds. WARNING: this animation only has a north component. For use under very special circumstances only." =
@@ -1217,8 +1200,16 @@
 		"2" : "Yes"
 	]
 	
+	// Inputs
 	input Assault(target_destination) : "Start an assault. Parameter passed in should be the name of the rally point."
 	input SetTacticalVariant(integer) : "Sets this soldier's tactical variant based on integer value."
+	input SetCommandable(void) : "Make a previously uncommandable Combine soldier commandable"
+	input SetNonCommandable(void) : "Make a previously commandable Combine soldier uncommandable"
+	input AddToPlayerSquad(void) : "Add to player squad, instantly."
+	input RemoveFromPlayerSquad(void) : "Remove from player squad, instantly."
+	
+	// Outputs
+	output OnPlayerUse(void) : "Fires when a player +USEs the soldier."
 ]
 
 
@@ -1890,7 +1881,7 @@
 		32768 :  "[32768] Never turn into a torso" : 0
 	]
 
-	output OnSwattedProp(ehandle) : "Fires when this NPC swats a prop, passing the prop as the activator and para
+	output OnSwattedProp(ehandle) : "Fires when this NPC swats a prop, passing the prop as the activator and parameter."
 ]
 
 @NPCClass base(BaseZombie) studio("models/Zombie/fast.mdl") = npc_fastzombie : "Fast Zombie"
