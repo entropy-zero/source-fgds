@@ -457,7 +457,7 @@
 	[
 		65536 :  "[65536] Friendly" : 0
 		131072 : "[131072] Use prop_physics collision rules"	: 0
-		262144 : "Follow player when idle"	: 0
+		262144 : "[262144] Follow player when idle"	: 0
 	]
 
 	startburied(choices) : "Start Buried" : "No" =
@@ -1013,6 +1013,14 @@
 		0 : "No. This is default behavior."
 		1 : "Yes, stay in squad until death."
 	]
+	
+	willpowerdisabled(choices) : "Willpower Disabled" : 0 : "Citizens in Entropy : Zero and Entropy : Zero 2 will calculate a 'willpower score' based on their current conditions. If they believe conditions are favorable, they will fight more aggressively. If conditions are unfavorable, they will fear enemies instead of hating them and retreat from combat. In general, citizens that are locked to a single location with limited mobility should have willpower disabled."=
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	willpowermodifier(integer) : "Willpower modifier" : 0 : "This value is added to the willpower calculation to make them more brave. (Or more cowardly, if negative) Has no effect if not using the willpower system for the Citizen."
 
 	denycommandconcept(string) : "Deny command speech concept" : "" : "If you want your citizens to squad with the player but not obey commands the player gives to move the squad, put a concept here and this citizen will speak the concept instead of obeying the order."
 	
