@@ -1923,6 +1923,7 @@
 	]
 
 	output OnSwattedProp(ehandle) : "Fires when this NPC swats a prop, passing the prop as the activator and parameter."
+	output OnCrab(ehandle) : "Fires when the zombie releases a headcrab, passing the headcrab as the activator and parameter."
 ]
 
 @NPCClass base(BaseZombie) studio("models/Zombie/fast.mdl") = npc_fastzombie : "Fast Zombie"
@@ -2512,14 +2513,14 @@
 	m_iszIdle(string) : "Pre Action Idle Animation" : "" : "The name of the sequence (such as 'idle01') or activity (such as 'ACT_IDLE') to play before the action animation if the NPC must wait for the script to be triggered. Use 'Start on Spawn' flag or MoveToPosition input to play this idle animation."
 	m_iszEntry(string) : "Entry Animation" : "" : "The name of the sequence (such as 'reload02') or activity (such as 'ACT_RELOAD') to play when the sequence starts, before transitioning to play the main action sequence."
 	m_iszPlay(string) : "Action Animation" : "" : "The name of the main sequence (such as 'reload02') or activity (such as 'ACT_RELOAD') to play."
-	m_iszPostIdle(string) : "Post Action Idle Animation" : "" : "The name of the sequence (such as 'idle01') or activity (such as 'ACT_IDLE') to play after the action animation."
+	m_iszPostIdle(string) : "Post Action Idle Animation" : "" : "The name of the sequence (such as 'idle01') or activity (such as 'ACT_IDLE') to play after the action animation. If the ''Loop in Post Idle'' spawnflag is not ticked, this will act as an Exit Animation, similar to the Entry Animation."
 	m_iszCustomMove(string) : "Custom Move Animation" : "" : "Used in conjunction with the 'Custom movement' setting for the 'Move to Position' property, specifies the sequence (such as 'crouch_run01') or activity (such as 'ACT_RUN') to use while moving to the scripted position."
-	m_bLoopActionSequence(Choices) : "Loop Action Animation?" : 0 =
+	m_bLoopActionSequence(Choices) : "Loop Action Animation?" : 0 : "Loops the action animation until the sequence is cancelled or interrupted." =
 	[
 		0 : "No"
 		1 : "Yes"
 	]
-	m_bSynchPostIdles(Choices) : "Synch Post Idles?" : 0 =
+	m_bSynchPostIdles(Choices) : "Synch Post Idles?" : 0 : "Causes scripts with the same targetname to immediately play their Post Action Idle Animation when the NPC starts playing the Post Action Idle Animation." =
 	[
 		0 : "No"
 		1 : "Yes"
@@ -2560,6 +2561,8 @@
 	output OnPostIdleEndSequence(void) : "Fires when the post-idle animation completes."
 	output OnCancelSequence(void) : "Fires when the sequence is cancelled."
 	output OnCancelFailedSequence(void) : "Fires when the sequence is cancelled without ever playing (OnCancelSequence will also fire)."
+	output OnPreIdleSequence(void) : "Fires when the pre-idle animation begins."
+	output OnFoundNPC(void) : "Fires when a target NPC is found and begins moving to play the script."
 	output OnScriptEvent01(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 1 } in the QC."
 	output OnScriptEvent02(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 2 } in the QC."
 	output OnScriptEvent03(void) : "Fires when a 'trigger' anim event occurs while playing the script. Use { event 1003 framenum 3 } in the QC."
@@ -3244,7 +3247,7 @@
 		1 : "Yes"
 	]
 	
-	NextBusy(string) : "NPC Cooldown Time" : "0,0" : "NPCs that leave this actbusy won't actbusy on their own again until this cooldown expires. This is for when an ai_goal_actbusy only gets NPCs to act busy with Activate, not any of the 'Force' inputs. The cooldown would be a random decimal in between the first number and the second number. Leaving both at 0 will cause ai_actbusy_search_time and ai_actbusy_search_time*2 to be used instead, which is default behavior."
+	NextBusy(float) : "NPC Cooldown Time" : "0,0" : "NPCs that leave this actbusy won't actbusy on their own again until this cooldown expires. This is for when an ai_goal_actbusy only gets NPCs to act busy with Activate, not any of the 'Force' inputs. The cooldown would be a random decimal in between the first number and the second number. Leaving both at 0 will cause ai_actbusy_search_time and ai_actbusy_search_time*2 to be used instead, which is default behavior."
 
 	// Inputs
 	input Activate( void ) : "Begin acting busy"
@@ -3703,6 +3706,11 @@
 	"A trigger volume that spawns leeches around entities inside it, and does damage to them until they die. "+
 	"Used to prevent players entering deep water."
 [
+	BiteInterval(float) : "Bite Interval" : "0.3" : "The amount of time that should pass in between leech bites."
+	PainStep(float) : "Pain Step" : "2.0" : "Damage will increase by this number for each leech bite."
+	MaxPain(float) : "Max Pain" : "15.0" : "This is the maximum damage that could be attained after multiple pain steps."
+	
+	output OnDamage(integer) : "Fires each time an entity takes damage."
 ]
 
 //-------------------------------------------------------------------------
@@ -3776,7 +3784,7 @@
 		"antlion_allied" : "Antlions are player allies" 
 //		"player_stealth" : "Player in APC is disguised as combine" 
 		"suit_no_sprint" : "Suit sprint function not yet enabled" 
-		"super_phys_gun" : "Super phys gun is enabled" 
+		"super_phys_gun" : "Super phys gun is enabled (Mapbase: Counter 1 prevents item dissolve)" 
 		"friendly_encounter" : "Friendly encounter sequence (lower weapons, etc.)"
 //		"citizens_passive" : "Citizens are *not* player allies (cannot be commanded)"
 		"gordon_invulnerable" : "Gordon is invulnerable"
@@ -3789,7 +3797,7 @@
 	]
 ]
 
-@PointClass base(Targetname, EnableDisable) sphere(SetRadius) = point_radiation_source : "Radiation source that trips the player's geiger counter. Does no actual damage."
+@PointClass base(Targetname, Parentname, EnableDisable) sphere(SetRadius) = point_radiation_source : "Radiation source that trips the player's geiger counter. Does no actual damage."
 [
 	SetRadius(float): "Radius" : "0" : "Only affects the geiger counter if the player is within this radius. 0 = no radius, use intensity only"
 	SetIntensity(float): "Intensity" : "1.0" : "The intensity of the radiation source. Cannot be 0."
@@ -4128,6 +4136,7 @@
 		2 : "[2] Deny player pickup (reserve for NPC)" : 0
 		4 : "[4] Not puntable by Gravity Gun" : 0
 		8 : "[8] Deny NPC pickup (reserve for player)" : 0
+		64 : "[64] Always touchable (no obstruction checking)" : 0
 	]
 	
 	// Inputs
@@ -4196,7 +4205,7 @@
 	]
 ]
 
-@PointClass base(Targetname, Parentname, Angles, BaseFadeProp) studio("models/items/ammocrate_rockets.mdl") = item_ammo_crate : "Ammo Crate"
+@PointClass base(Targetname, Parentname, Angles, RenderFields, BaseFadeProp) studio("models/items/ammocrate_empty.mdl") = item_ammo_crate : "Ammo Crate"
 [
 	AmmoType(choices) : "Ammo Type" : 0 =
 	[
@@ -4213,11 +4222,15 @@
 		10 : "S.L.A.M."
 		11 : "Empty"
 	]
+	
+	skin(integer) : "Skin" : 0 : "The ''Empty'' ammo crate can use multiple skins based on other crates. Changing the skin might be reflected in the viewport, but it will only apply to the empty ammo crate."
 
 	// Inputs
 	input Kill(void) : "Remove the ammo crate"
 	output OnUsed(void) : "Fires when +used by the player."
 	output OnAmmoTaken(void) : "Fires the instant ammo is taken from this crate."
+	
+	input Skin(integer) : "Changes the model skin to the specified number."
 ]
 
 @PointClass base(BasePropPhysics, Targetname, Angles, DamageFilter, BaseFadeProp) studioprop() = item_item_crate : "Item Crate" // studio("models/items/item_item_crate.mdl")
@@ -4264,10 +4277,12 @@
 //	model(studio) : "Model" : "models/items/item_item_crate.mdl" : "The model of this item_item_crate. Only works when this crate's appearance is set to use a custom model."
 //]
 
-@PointClass base(Targetname, Angles, BaseFadeProp) studio( "models/props_combine/health_charger001.mdl" ) = item_healthcharger : "Health Charger"
+@PointClass base(Targetname, Parentname, Angles, RenderFields, Studiomodel, BaseFadeProp) studioprop() = item_healthcharger : "Health Charger"
 [
 	// dmdelay(integer) : "Deathmatch recharge delay" : 0
-	_minlight(string) : "Minimum light level"
+	//_minlight(string) : "Minimum light level"
+	
+	model(studio) : "Model" : "models/props_combine/health_charger001.mdl"
 	
 	Charge(integer) : "Juice" : 0 : "Overrides the amount of suit power this charger contains. Use 0 for the default charge, which is usually the maximum juice. Use -1 if you want the charger to start empty."
 	MaxCharge(integer) : "Max Juice" : 0 : "Overrides the maximum suit power this charger contains. Use 0 for the default charge, 75."
@@ -4287,10 +4302,12 @@
 	output OnPlayerUse(void) : "Fired when the player +USEs this charger."
 ]
 
-@PointClass base(Targetname, Angles, BaseFadeProp) studio( "models/props_combine/suit_charger001.mdl" ) = item_suitcharger : "Battery recharger"
+@PointClass base(Targetname, Parentname, Angles, RenderFields, Studiomodel, BaseFadeProp) studioprop() = item_suitcharger : "Battery recharger"
 [
 	// dmdelay(integer) : "Deathmatch recharge delay" : 0
-	_minlight(string) : "Minimum light level"
+	//_minlight(string) : "Minimum light level"
+	
+	model(studio) : "Model" : "models/props_combine/suit_charger001.mdl"
 	
 	Charge(integer) : "Juice" : 0 : "Overrides the amount of suit power this charger contains. Use 0 for the maximum juice. (which is normally 75) Use -1 if you want the charger to start empty."
 	MaxCharge(integer) : "Max Juice" : 0 : "Overrides the maximum suit power this charger contains. Use 0 for the default charge, which varies based on this entity's spawnflags. (Normal = 75, Citadel = 500, Kleiner = 25)"
@@ -4321,7 +4338,7 @@
 // Weapons
 //
 //-------------------------------------------------------------------------
-@BaseClass color(0 0 200) base(Targetname, Angles) sphere(fademindist) sphere(fademaxdist) = Weapon
+@BaseClass color(0 0 200) base(Targetname, Angles, RenderFields) sphere(fademindist) sphere(fademaxdist) = Weapon
 [
 	spawnflags(Flags) =
 	[
@@ -4330,6 +4347,8 @@
 		4 : "[4] Not puntable by Gravity Gun" : 0
 		8 : "[8] Deny NPC pickup (reserve for player)" : 0
 		16 : "[16] Preserve ammo values when picked up" : 0
+		32 : "[32] Preserve name on player pickup" : 0
+		64 : "[64] Always touchable (no obstruction checking)" : 0
 	]
 	
 	SetAmmo1(integer) : "Ammo 1 Override" : 0 : "Overrides the amount of primary ammo this weapon has. Be sure to set 'Preserve ammo values when picked up' for this to be maintained upon pickup."
@@ -4456,7 +4475,7 @@
 	input	Toggle(void) : "Toggle enable/disable."
 ]
 
-@PointClass base(Targetname) size( 16 16 16) sphere() color( 255 255 0 ) = point_bugbait : "Bugbait sensor point"
+@PointClass base(Targetname, Parentname) size( 16 16 16) sphere() color( 255 255 0 ) = point_bugbait : "Bugbait sensor point"
 [
 	Enabled(choices) : "Start Enabled" : 1 =
 	[
@@ -4548,12 +4567,16 @@
 		128: "[128] Suppress zoom" : 0
 		256: "[256] Don't suppress flashlight" : 0
 	]
+	
+	AdditionalButtons(integer) : "Additional Buttons" : 0 : "Additional buttons to suppress, other than those listed in the spawnflags. Advanced users only."
 
 	// Inputs
 	input ModifySpeed(float) : "Modifies player speed by X ammount. Use 1.0 to reset."
 	
 	input Enable(void) : "Enables the spawnflag abilities without actually modifying the player's speed."
 	input Disable(void) : "Disables the spawnflag abilities without actually modifying the player's speed."
+	
+	input SetAdditionalButtons(integer) : "Sets the additional suppressed buttons."
 ]
 
 //-------------------------------------------------------------------------
@@ -5182,6 +5205,8 @@
 	input EnableRadarDetectEnemies( void ) : "Enable Jalopy radar to detect Striders and Hunters"
 	input AddBusterToCargo( void ) : "Put a striderbuster in the cargo trigger"
 	input SetCargoHopperVisibility ( bool ) : "Set the strider buster hopper thingy to be visible, or invisible."
+	input EnableHazardLights ( void ) : "Enables the jalopy's hazard lights."
+	input DisableHazardLights ( void ) : "Disables the jalopy's hazard lights."
 
 	input DisablePhysGun(void) : "Disable physgun interactions with the jeep."
 	input EnablePhysGun(void) : "Enable physgun interactions with the jeep (default)."
