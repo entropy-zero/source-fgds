@@ -644,7 +644,7 @@
 
 ]
 
-@NPCClass base(BaseNPC) studio("models/antlion_guard.mdl") = npc_antlionguard : "Antlion Guard"
+@NPCClass base(BaseNPC, EZVariable) studio("models/antlion_guard.mdl") = npc_antlionguard : "Antlion Guard"
 [
 	spawnflags(Flags) =
 	[
@@ -677,12 +677,6 @@
 	]
 
 	shovetargets(target_destination) : "Shove Targets" : "" : "All entities of this name will be considered shove targets."
-	
-	xen(choices) : "Xen Antlion" : "No" =
-	[
-		0 : "No"
-		1 : "Yes"
-	]
 
 	// Inputs
 	input Unburrow(void) : "Unburrow from the ground"
@@ -726,6 +720,10 @@
 ]
 
 @NPCClass base(BaseBird) studio("models/pigeon.mdl") = npc_pigeon : "Pigeon"
+[
+]
+
+@NPCClass base(BaseBird) studio("models/aflock.mdl") = npc_aliencrow : "Boid"
 [
 ]
 
@@ -1016,8 +1014,8 @@
 	
 	willpowerdisabled(choices) : "Willpower Disabled" : 0 : "Citizens in Entropy : Zero and Entropy : Zero 2 will calculate a 'willpower score' based on their current conditions. If they believe conditions are favorable, they will fight more aggressively. If conditions are unfavorable, they will fear enemies instead of hating them and retreat from combat. In general, citizens that are locked to a single location with limited mobility should have willpower disabled."=
 	[
-		0 : "No"
-		1 : "Yes"
+		0 : "Use willpower"
+		1 : "Do not use willpower"
 	]
 
 	willpowermodifier(integer) : "Willpower modifier" : 0 : "This value is added to the willpower calculation to make them more brave. (Or more cowardly, if negative) Has no effect if not using the willpower system for the Citizen."
@@ -1462,6 +1460,41 @@
 @NPCClass base(TalkNPC, PlayerCompanion) studio() = npc_vortigaunt : "Vortigaunt"
 [
 	model(studio) : "World model" : "models/vortigaunt.mdl"
+
+	ArmorRechargeEnabled(choices) : "Allow Armor Recharging" : 1 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	HealthRegenerateEnabled(choices) : "Regenerate Health" : 0 : "Whether or not the vortigaunt will recover his own health over time like vital allies, while in combat" =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
+	// Inputs
+	input EnableArmorRecharge(void) : "Allow armor recharging on players"
+	input DisableArmorRecharge(void) : "Do not allow armor recharging on players"
+	input ExtractBugbait(target_destination) : "Causes the vortigaunt to extract bugbait from the named target passed in."
+	input ChargeTarget(target_destination) : "Force the vortigaunt to charge the named target."
+	input EnableHealthRegeneration(void) : "Allow the vortigaunt to start regenerating his health over time, like vital allies."
+	input DisableHealthRegeneration(void) : "Stop the vortigaunt from regenerating his health. (Default behavior)"
+	input TurnBlue(bool) : "If true, turn blue. If false, turn green. (Episodic)."
+	input TurnBlack(bool) : "If true, turn black. If false, be seen. (Episodic)."
+	input BeginCarryNPC(void) : "Begin to override our animations for 'carrying' an NPC. (Episodic)"
+	input EndCarryNPC(void) : "Stop overriding our animations for 'carrying' an NPC. (Episodic)"
+
+	// Outputs
+	output OnFinishedExtractingBugbait(void) : "Fires when the vortigaunt's finished extracting bugbait from a target."
+	output OnFinishedExtractingTauCannon(void) : "Fires when the vortigaunt's finished extracting the tau cannon from the jeep."
+	output OnFinishedChargingTarget(void) : "Fires when the vortigaunt has finished charging a target."
+	output OnPlayerUse(void) : "Fires when a player +USEs the vortigaunt."
+]
+
+@NPCClass base(TalkNPC, PlayerCompanion, EZVariable) studio() = npc_zombigaunt : "Zombigaunt"
+[
+	model(studio) : "World model" : "models/zombigaunt.mdl"
 
 	ArmorRechargeEnabled(choices) : "Allow Armor Recharging" : 1 =
 	[
@@ -5545,7 +5578,8 @@
 ]
 
 // New weapons for EZ2
-@PointClass base(Weapon) studio("models/weapons/w_pistol.mdl") = weapon_pulsepistol : "Kinetic Pistol" []
+@PointClass base(Weapon) studio("models/weapons/w_pulsepistol.mdl") = weapon_pulsepistol : "Kinetic Pistol" []
+@PointClass base(Weapon) studio("models/weapons/w_flaregun.mdl") = weapon_displacer_pistol : "Displacer Pistol" []
 @PointClass base(Weapon) studio("models/weapons/w_slam.mdl") = weapon_slam : "SLAM" []
 @NPCClass base(BaseNPC) studio("models/weapons/w_slam.mdl") = npc_satchel : "Active Remote SLAM"
 [
@@ -5578,3 +5612,18 @@
 	input EnableMove(void) : "Enable APC movement."
 	input ForcePlayerOut(void) : "Force the player out of the vehicle."
 ]
+
+@BaseClass base(BaseNPC) = BaseFlora
+[
+	output OnLower(void) : "Fired when lightstalk is lowered"
+	output OnRise(void) : "Fired when lightstalk is risen"
+]
+
+@NPCClass base(BaseFlora) studio("models/light.mdl") = npc_xenlight : "Light Stalk"
+[
+	lightcolor(color255) : "Light Color" : "255 255 255 100" : "Light Color RGB-Intensity"
+]
+
+@NPCClass base(BaseFlora) studio("models/tree.mdl") = npc_xentree : "Xen Tree" []
+@NPCClass base(BaseFlora) studio("models/hair.mdl") = npc_xenhair : "Xen Hair" []
+@NPCClass base(BaseFlora) studio("models/fungus.mdl") = npc_xenspore : "Xen Spore" []
