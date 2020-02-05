@@ -963,7 +963,8 @@
 		2 : "Refugee"
 		3 : "Rebel"
 		5 : "Rebel Brute"
-		6 : "Aperture"
+		6 : "Longfall"
+		7 : "Arctic"
 		4 : "Unique"
 	]
 
@@ -4338,7 +4339,7 @@
 // Weapons
 //
 //-------------------------------------------------------------------------
-@BaseClass color(0 0 200) base(Targetname, Angles, RenderFields) sphere(fademindist) sphere(fademaxdist) = Weapon
+@BaseClass color(0 0 200) base(Targetname, Angles, RenderFields, DisplacementFields) sphere(fademindist) sphere(fademaxdist) = Weapon
 [
 	spawnflags(Flags) =
 	[
@@ -5652,3 +5653,9 @@
 @NPCClass base(BaseFlora) studio("models/tree.mdl") = npc_xentree : "Xen Tree" []
 @NPCClass base(BaseFlora) studio("models/hair.mdl") = npc_xenhair : "Xen Hair" []
 @NPCClass base(BaseFlora) studio("models/fungus.mdl") = npc_xenspore : "Xen Spore" []
+
+// Reverse engineered from Left 4 Dead 2 - new code, same functionality
+@PointClass base(Origin,Targetname) = info_remarkable : "An object in the world such that characters seeing it will speak a TLK_REMARK concept"
+[
+	contextsubject(string) : "Subject context" : "" : "Text to put in the SUBJECT context of the TLK_REMARK fired upon sighting this object." 
+]

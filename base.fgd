@@ -380,7 +380,17 @@
 	ResponseContext(string) : "Response Contexts" : "" : "Response system context(s) for this entity. Format should be: 'key:value,key2:value2,etc'. When this entity speaks, the list of keys & values will be passed to the response rules system."
 ]
 
-@BaseClass base(Targetname, DamageFilter, Shadow) = Breakable
+@BaseClass = DisplacementFields
+[
+	// Entropy Zero 2 - Xen Grenade and Displacer Pistol
+	DisplacementImpossible(choices) : "Displacement Impossible" : 0 : "Prevent this entity from being consumed by the Xen grenades or Displacement Pistol" =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+]
+
+@BaseClass base(Targetname, DamageFilter, Shadow, DisplacementFields) = Breakable
 [
 	ExplodeDamage(float) : "Explosion Damage" : 0 : "If non-zero, when this entity breaks it will create an explosion that causes the specified amount of damage. See also 'Explosion Radius'."
 	ExplodeRadius(float) : "Explosion Radius" : 0 : "If non-zero, when this entity breaks it will create an explosion with a radius of the specified amount. See also 'Explosion Damage'."
@@ -557,7 +567,7 @@
 	output OnHealthChanged(float) : "Fired when the health of this entity changes, passing the new value of health as a percentage of max health, from [0..1]."
 ]
 
-@BaseClass base(Targetname, Parentname, Angles, RenderFields, DamageFilter, ResponseContext, Shadow, CombatCharacterFields, StudiomodelBase) color(0 200 200) = BaseNPC
+@BaseClass base(Targetname, Parentname, Angles, RenderFields, DamageFilter, ResponseContext, Shadow, CombatCharacterFields, StudiomodelBase, DisplacementFields) color(0 200 200) = BaseNPC
 [
 	target(target_destination) : "Target Path Corner" : : "If set, the name of a path corner entity that this NPC will walk to, after spawning."
 	squadname(String) : "Squad Name" : : "NPCs that are in the same squad (i.e. have matching squad names) will share information about enemies, take turns attacking and covering each other, etc. Squads work differently from NPC to NPC and some don't support them by default."
