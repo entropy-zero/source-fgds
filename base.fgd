@@ -61,6 +61,7 @@
 	input CreateSeparateRagdoll(void) : "Creates a separate serverside ragdoll at this entity's origin."
 	input CreateSeparateRagdollClient(void) : "Creates a separate clientside ragdoll at this entity's origin."
 	input SetLightingOrigin(target_destination) : "Sets this entity's lighting origin." // Was this really not in the FGD before?
+	input SetPoseParameter(string) : "Sets the specified pose parameter to the specified value (e.g. ''aim_yaw 45'')."
 	
 	// Outputs
 	output OnIgnite(void) : "Fires when this object catches fire."
@@ -102,8 +103,8 @@
 	// Inputs
 	input Kill(void) : "Removes this entity from the world."
 	input KillHierarchy(void) : "Removes this entity and all its children from the world."
-	input KillIfNotVisible(void) : "Removes this entity if it is not in the player's viewcone."
-	input KillWhenNotVisible(void) : "Removes this entity when it is not in the player's viewcone."
+	input KillIfNotVisible(void) : "Removes this entity if it is not in a player's viewcone."
+	input KillWhenNotVisible(float) : "Removes this entity when it is not in a player's viewcone. You can pass a time for when this should start."
 	input AddOutput(string) : "Adds an entity I/O connection or a keyvalue to this entity. Format: '<output name> <targetname>:<inputname>:<parameter>:<delay>:<max times to fire (-1 == infinite)>'. You could also use it on regular keyvalues: '<key name> <key value>'. Very dangerous, use with care."
 	input ChangeVariable(string) : "Similar to AddOutput, except it changes an internal variable similar to logic_datadesc_accessor instead. Very dangerous, use with care."
 	input FireUser1(void) : "Causes this entity's OnUser1 output to be fired."
@@ -142,6 +143,8 @@
 	input RemoveHealth(integer) : "Removes from this entity's health."
 	
 	input SetMaxHealth(integer) : "Sets this entity's max health."
+	
+	input SetEntityName(target_destination) : "Sets this entity's name that other entities should refer to it by."
 	
 	input SetTarget(target_destination) : "Sets this entity's target. This is specific to certain entities, particularly logic entities that involve a target."
 	input SetOwnerEntity(target_destination) : "Sets this entity's owner entity. This has nothing to do with parenting and has more to do with collision and kill credits."
@@ -891,7 +894,7 @@
 	_quadratic_attn(string)	: "Quadratic" : "1"
 	_fifty_percent_distance(string) : "50 percent falloff distance" : "0": "Distance at which brightness should fall off to 50%. If set, overrides linear constant and quadratic paramaters."
 	_zero_percent_distance(string) : "0 percent falloff distance" : "0": "Distance at which brightness should fall off to negligible (1/256)%. Must set _fifty_percent_distance to use."
-	_hardfalloff(integer) : "hard falloff" : 0 : "If set, causes lights to fall to exactly zero beyond the zero percent distance. May cause unrealistic lightijng if not used carefully."
+	_hardfalloff(integer) : "Hard falloff" : 0 : "If set, causes lights to fall to exactly zero beyond the zero percent distance. May cause unrealistic lightijng if not used carefully."
 	// Inputs
 	input TurnOn(void) : "Turn the light on."
 	input TurnOff(void) : "The the light off."
@@ -1089,6 +1092,9 @@
 		0 : "No"
 		1 : "Yes"
 	]
+	
+	// Inputs
+	input SetChapterTitle(string) : "Sets the chapter title this map should identify with."
 ]
 
 
@@ -1103,7 +1109,7 @@
 [
 ]
 
-@PointClass base(Targetname, Parentname) iconsprite("editor/ambient_generic.vmt") sphere() = ambient_generic : "Universal ambient sound. Use it to play and control a single sound."
+@PointClass base(Targetname, Parentname) iconsprite("editor/ambient_generic.vmt") sphere(radius) = ambient_generic : "Universal ambient sound. Use it to play and control a single sound."
 [
 	message(sound) : "Sound Name" : "" : "Name of the GameSound entry for the sound to play. Also supports direct .wav filenames."
 	health(integer) : "Volume" : 10 : "Sound volume, expressed as a range from 0 to 10, where 10 is the loudest."
@@ -1198,6 +1204,8 @@
 	// Inputs
 	input Zoom(void) : "Start controlling the player's FOV."
 	input UnZoom(void) : "Stop controlling the player's FOV."
+	input UnZoomWithRate(void) : "Stop controlling the player's FOV and returns to the original FOV with the same rate it used to reach it."
+	input SetZoomRate(float) : "Sets the amount of time it should take to reach the specified FOV."
 
 	spawnflags(flags) =
 	[
@@ -1351,7 +1359,7 @@
 	input SetMaxPiecesDX8(integer)	: "Set the max gib count under DX8."
 ]
 
-@PointClass base(Parentname, Targetname, Angles, EnableDisable) color(255 128 0) studio("models/editor/axis_helper_thick.mdl") sphere(MinDist) sphere(MaxDist) = env_lightglow : 
+@PointClass base(Parentname, Targetname, Angles, EnableDisable) color(255 128 0) studio("models/editor/axis_helper_thick.mdl") sphere(MinDist) sphere(MaxDist) sphere(OuterMaxDist) sphere(GlowProxySize) = env_lightglow : 
 	"An entity that puts an additive glow in the world, mostly used over light sources."
 [
 	rendercolor(color255) : "Color (R G B)" : "255 255 255"
@@ -1949,7 +1957,7 @@
 	smokesprite(sprite) : "Smoke Puff" : "sprites/whitepuff.spr"
 ]
 
-@PointClass base(Targetname, Parentname) sphere() sphere(inner_radius) iconsprite("editor/env_physexplosion.vmt") = env_physexplosion : 
+@PointClass base(Targetname, Parentname) sphere(radius) sphere(inner_radius) sphere(radius) iconsprite("editor/env_physexplosion.vmt") = env_physexplosion : 
 	"An entity that creates an explosion at its origin. If the no-damage spawnflag is set, the explosion won't be visible, but will apply force to any physics objects within its radius."
 [
 	magnitude(string) : "Magnitude" : "100" : "Amount of physics force applied by the explosion."
@@ -2281,7 +2289,7 @@
 	input SetHudHint(string) : "Sets the hint message."
 ]
 
-@PointClass sphere() iconsprite("editor/env_shake.vmt") base(Targetname, Parentname) = env_shake : 
+@PointClass sphere(radius) iconsprite("editor/env_shake.vmt") base(Targetname, Parentname) = env_shake : 
 	"An entity to control screen shake on players." 
 [
 	spawnflags(flags) =
@@ -2307,7 +2315,7 @@
 	input StopShake(void) : "Stop the shake."
 ]
 
-@PointClass sphere() size(-4 -4 -4, 4 4 4) base(Targetname, Parentname) = env_viewpunch :
+@PointClass sphere(radius) size(-4 -4 -4, 4 4 4) base(Targetname, Parentname) = env_viewpunch :
 	"Causes a view punch on players." 
 [
 	spawnflags(flags) =
@@ -2448,7 +2456,7 @@
 	input SetGibFlags(integer) : "Sets the flags for each gib."
 ]
 
-@PointClass base(Targetname,Parentname) sphere() iconsprite("editor/env_soundscape.vmt") = env_soundscape_proxy : 
+@PointClass base(Targetname,Parentname) sphere(radius) iconsprite("editor/env_soundscape.vmt") = env_soundscape_proxy : 
 	"An entity that acts like a soundscape but gets all of its sound parameters from another env_soundscape entity."
 [
 	MainSoundscapeName(target_destination) : "Soundscape Entity" : "" : "The soundscape to get all sound parameters from."
@@ -2456,7 +2464,7 @@
 	radius(integer) : "Radius" : 128					// NEEDHELP: The datadesc doesn't include this entry. Probably not used.
 ]
 
-@PointClass base(Targetname,Parentname,EnableDisable) sphere() iconsprite("editor/env_soundscape.vmt") line(255 255 255, targetname, position0) line(255 255 255, targetname, position1) line(255 255 255, targetname, position2) line(255 255 255, targetname, position3) line(255 255 255, targetname, position4) line(255 255 255, targetname, position5) line(255 255 255, targetname, position6) line(255 255 255, targetname, position7) = env_soundscape : 
+@PointClass base(Targetname,Parentname,EnableDisable) sphere(radius) iconsprite("editor/env_soundscape.vmt") line(255 255 255, targetname, position0) line(255 255 255, targetname, position1) line(255 255 255, targetname, position2) line(255 255 255, targetname, position3) line(255 255 255, targetname, position4) line(255 255 255, targetname, position5) line(255 255 255, targetname, position6) line(255 255 255, targetname, position7) = env_soundscape : 
 	"An entity to control sound in an area. The active soundscape at any time is the last one that had line-of-sight to the player, and was within the radius."
 [
 	radius(integer) : "Radius" : 128 : "If set to -1, then the player can hear the soundscape as long as he can see it (regardless of distance to it)."
@@ -2486,7 +2494,7 @@
 	output OnPlay(void) : "Fired when this soundscape becomes the active one."
 ]
 
-@PointClass base(env_soundscape) sphere() iconsprite("editor/env_soundscape.vmt") = env_soundscape_triggerable : 
+@PointClass base(env_soundscape) sphere(radius) iconsprite("editor/env_soundscape.vmt") = env_soundscape_triggerable : 
 	"An entity that works like env_soundscape except that it works in conjunction with trigger_soundscape to determine when a player hears it."
 [
 ]
@@ -2525,7 +2533,7 @@
 	input SparkOnce(void) : "Spark once."
 ]
 
-@PointClass base(Targetname, Parentname, RenderFields,DXLevelChoice) size(-2 -2 -2, 2 2 2) sprite() color(20 140 20) = env_sprite : 
+@PointClass base(Targetname, Parentname, RenderFields,DXLevelChoice) size(-2 -2 -2, 2 2 2) sprite() color(20 140 20) sphere(GlowProxySize) = env_sprite : 
 	"An entity that controls the drawing of a sprite in the world." 
 [
 	framerate(string) : "Framerate" : "10.0" : "Rate at which the sprite should animate, if at all."
@@ -2551,7 +2559,7 @@
 	input ToggleSprite(void) : "Toggle the sprite between hidden and shown."
 ]
 
-@PointClass base(env_sprite, Angles) = env_sprite_oriented :
+@PointClass base(env_sprite, Angles) sphere(GlowProxySize) = env_sprite_oriented :
     "A env_sprite that allows orientation."
 [
 	framerate(string) : "Framerate" : "10.0" : "Rate at which the sprite should animate, if at all."
@@ -2872,11 +2880,11 @@
 
 ]
 
-@PointClass base(Targetname, Parentname) size(-8 -8 -8, 8 8 8) = point_tesla : 
+@PointClass base(Targetname, Parentname) size(-8 -8 -8, 8 8 8) sphere(m_flRadius) = point_tesla : 
 	"An entity that creates tesla lightning arcs around its origin."
 [
 	m_SourceEntityName(target_destination) : "Source Entity" : "" : "If specified, tesla lightning will originate from the specified entity. Otherwise, they originate from this entity."
-	m_SoundName(string) : "Sound Name" : "DoSpark" : "Sound to be played whenever lightning is created."
+	m_SoundName(sound) : "Sound Name" : "DoSpark" : "Sound to be played whenever lightning is created."
 
 	texture(sprite) : "Sprite Name" : "sprites/physbeam.vmt" : "Material to use for the tesla lightning beams."
 
@@ -3511,7 +3519,7 @@
 // Lights
 //
 //-------------------------------------------------------------------------
-@PointClass light() iconsprite("editor/light.vmt") base(Targetname, Light) sphere(_fifty_percent_distance) sphere(_zero_percent_distance) = light :
+@PointClass light() iconsprite("editor/light.vmt") base(Targetname, Light) sphere(_fifty_percent_distance) sphere(_zero_percent_distance) sphere(_hardfalloff) sphere(_distance) = light :
 	"An invisible omnidirectional lightsource."
 [
 	target(target_destination) : "Entity To Point At" : : "The name of an entity in the map that the spotlight will point at. This will override the spotlight's angles."
@@ -3533,7 +3541,7 @@
 	SunSpreadAngle(float) : "SunSpreadAngle" : 0 : "The angular extent of the sun for casting soft shadows. Higher numbers are more diffuse. 5 is a good starting value."
 ]
 
-@PointClass base(Targetname, Angles, Light) lightprop("models/editor/spot.mdl") lightcone() sphere(_fifty_percent_distance) sphere(_zero_percent_distance) = light_spot :
+@PointClass base(Targetname, Angles, Light) lightprop("models/editor/spot.mdl") lightcone() sphere(_fifty_percent_distance) sphere(_zero_percent_distance) sphere(_hardfalloff) = light_spot :
 	"An invisible and directional spotlight."
 [
 	target(target_destination) : "Entity to point at" : : "The name of an entity in the map that the spotlight will point at. This will override the spotlight's angles."
@@ -3881,7 +3889,7 @@
 	// Outputs
 	output OnBreak(void) : "Fires when this rope breaks."
 
-	UseWind(choices) : "Use Wind" : 0 : "When set to Yes, the rope will act as though it's being affected by wind." =
+	NoWind(choices) : "Disable Wind" : 0 : "When set to Yes, the rope will no longer act as though it's being affected by wind." =
 	[
 		0 : "No"
 		1 : "Yes"
@@ -4276,7 +4284,7 @@
 	]
 ]
 
-@PointClass base(Targetname, Parentname, Angles, Global, Studiomodel) studioprop() = prop_door_rotating : 
+@PointClass base(Targetname, Parentname, Angles, Global, Studiomodel, RenderFields) studioprop() = prop_door_rotating : 
 	"An entity used to place a door in the world."
 [
 	disableshadows(choices) : "Disable Shadows" : 1 : "Used to disable dynamic shadows on this entity." =
@@ -4608,7 +4616,7 @@
 @PointClass base(Targetname) = point_posecontroller : 
 	"An entity that controls a pose parameter of a prop and cycles the pose clientside." 
 [
-	PropName(target_destination) : "Prop Name" : : "Name of the prop to control."
+	PropName(target_destination) : "Target" : : "Name of the prop to control. Can be any animating entity."
 	PoseParameterName(string) : "Pose Parameter Name" : : "Name of the pose parameter to control."
 	PoseValue(float) : "Pose Parameter Value" : "0.0" : "Normalized value for the pose parameter from 0.0 and 1.0 (maps to min and max range)."
 	InterpolationTime(float) : "Interpolation Time" : "0.0" : "Number of seconds (0.0 to 10.0) for client to match absolue pose values."
@@ -4632,6 +4640,7 @@
 	FModAmplitude(float) : "Frequency Modulation Amplitude" : "0.0" : "Modulation extents from 0.0f to 10.0."
 	
 	// Inputs
+	input SetTarget(target_destination) : "Sets the prop to control."
 	input SetPoseParameterName(string) : "Sets the pose parameter to control."
 	input SetPoseValue(float) : "Set the pose parameter to a normalized value between 0.0 and 1.0 (maps to min and max range)."
 	input SetInterpolationTime(float) : "Set the interpolation time to a number of seconds between 0.0 and 10.0."
@@ -5057,6 +5066,8 @@
 		"WARNING: setting this to zero (or a value > 1024) when the microphone is in Speaker mode can be very bad for performance!!"
 		
 	landmark(target_destination) : "Local Destination Landmark" : : "If specified, then sounds offset from the speaker by their initial offset from this landmark. Only applicable in Speaker mode."
+	
+	PitchScale(float) : "Pitch Scale" : "1.0" : "Scales the pitch of transmitted sounds."
 
 	// Inputs
 	input SetSpeakerName(target_destination) : "Set the microphone to output through a different speaker entity."
@@ -5538,6 +5549,13 @@
 [
 	// Keys
 	startvalue(vector) : "Initial Value" : "0 0 0" : "The vector this entity should start with."
+	
+	spawnflags(flags) =
+	[
+		1 : "[1] Disable X" : 0
+		2 : "[2] Disable Y" : 0
+		4 : "[4] Disable Z" : 0
+	]
 
 	// Inputs
 	input Add(vector) : "Adds a vector to this entity's current value and fires the OutValue output with the result."
@@ -5548,8 +5566,15 @@
 	input Subtract(vector): "Subtracts a vector from this entity's current value and fires the OutValue output with the result."
 	input GetValue(void): "Causes this entity to fire its OnGetValue output with its current vector. Used for polling the counter when you don't want constant updates from the OutValue output."
 	
+	input PointAtLocation(vector): "Creates an angle pointing from the entity's current vector to the specified point and fires the OutValue output with the result."
+	input PointAtEntity(target_destination): "Creates an angle pointing from the entity's current vector to the specified entity and fires the OutValue output with the result."
+	
 	input Normalize(void): "Normalizes this entity's vector and fires the OutValue output with the result."
 	input NormalizeAngles(void): "Normalizes this entity's vector as angles and fires the OutValue output with the result."
+	input VectorAngles(void): "Converts this entity's vector to an angle, assuming the current vector is a direction vector. Fires the OutValue output with the result."
+	input AngleVectorForward(void): "Converts this entity's vector angles to a vector in the forward direction. Fires the OutValue output with the result."
+	input AngleVectorRight(void): "Converts this entity's vector angles to a vector in the right direction. Fires the OutValue output with the result."
+	input AngleVectorUp(void): "Converts this entity's vector angles to a vector in the up direction. Fires the OutValue output with the result."
 	
 	input SetX(float) : "Sets this entity's X coordinate."
 	input SetY(float) : "Sets this entity's Y coordinate."
@@ -5608,17 +5633,24 @@
 	"Gets and outputs some model information from an entity."
 [
 	target(target_destination) : "Target" : "" : "The entity whose model will be evaluated."
+	PoseParameterName(string) : "Pose Parameter Name" : "" : "(Optional) The pose parameter to use for pose parameter-related I/O."
 
 	// Inputs
 	input SetTarget(target_destination) : "Sets this entity's target."
 	input GetNumSkins(void) : "Gets the number of skins on the target entity."
 	input LookupSequence(string) : "Looks up the specified sequence on the target entity."
 	input LookupActivity(string) : "Looks up the specified activity on the target entity. Uses the sequence outputs and outputs the first sequence with the given activity."
+	
+	input SetPoseParameterName(string) : "Sets the pose parameter to target."
+	input SetPoseParameterValue(float) : "Sets the target pose parameter's current value."
+	input GetPoseParameter(void) : "Gets the current value of the target pose parameter and fires OutPoseParameterValue with it."
 
 	// Outputs
 	output OutNumSkins(integer) : "Outputs number of skins."
 	output OnHasSequence(integer) : "Fires when the target has the sequence requested. Outputs the sequence's index."
 	output OnLacksSequence(void) : "Fires when the target does not have the sequence requested."
+	
+	output OutPoseParameterValue(float) : "Fires when the pose parameter value is requested, outputting its current value."
 ]
 
 @PointClass base(Targetname, EnableDisable) size(-8 -8 -8, 8 8 8) = game_globalvars :
@@ -5934,7 +5966,7 @@
 	
 	AmmoType(integer) : "Ammo Type" : : "Uses a specific ammo type by order in the ammo def. (not to be confused with damage type)"
 	PlayerPenetrationCount(integer) : "Player Penetration Count" : : "Presumably how many players the inflictor has gone through before reaching the current victim. Appears to be unused in singleplayer games."
-	DamagedOtherPlayers(integer) : "Player Penetration Count" : : "Function unknown, possibly unused"
+	DamagedOtherPlayers(integer) : "Damaged Other Players" : : "Function unknown, possibly unused"
 	
 	DamageForce(vector) : "Damage Force" : "0 0 0" : "The force to apply when the damage is applied."
 	DamagePosition(vector) : "Damage Position" : "0 0 0" : "What position the damage took place."
@@ -7464,7 +7496,53 @@
 	health(integer) : "Health" : 0 : "Number of points of damage to take before breaking.  0 means don't break."	
 ]
 
-@BaseClass base(Targetname, Global, Angles, Studiomodel, BreakableProp, DXLevelChoice, BaseFadeProp) = BasePropPhysics
+@PointClass base(prop_dynamic_base) studioprop() = prop_interactable :
+	"A prop designed to be interacted with like a button. It has all of the properties of prop_dynamic without having to use an accompanying func_door or func_button."
+[
+	spawnflags(flags) =
+	[
+		512 : "[512] +USE interactable" : 1
+		1024 : "[1024] Touch interactable" : 0
+		2048 : "[2048] Disable interaction commands when locked" : 0
+		4096 : "[4096] Radius use" : 0
+	]
+
+	Locked(choices) : "Start locked" : 0 : "If set, this prop_interactable will start locked, making it uninteractable." =
+	[
+		0: "No"
+		1: "Yes"
+	]
+	
+	SetCooldown(float) : "Cooldown" : "1.0" : "The amount of time after this prop_interactable is used before it can be interacted with again. This is always based on when the prop_interactable was pressed, disregarding any active In Sequence, but an optional Out Sequence will play after the cooldown is over. It is also used when the prop_interactable is locked."
+	
+	PressedSound(sound) : "Pressed Sound" : "" : "The sound to play when the button is successfully pressed."
+	LockedSound(sound) : "Locked Sound" : "" : "The sound to play when the button is interacted with while locked."
+	InSequence(string) : "In Sequence" : "" : "Optional sequence to play when the button is pressed, representing a button going 'in'."
+	OutSequence(string) : "Out Sequence" : "" : "Optional sequence to play after the button was interacted with and the cooldown is finished, representing a button coming back 'out' after an 'in' animation."
+	LockedSequence(string) : "Locked Sequence" : "" : "Optional sequence to play when the prop_interactable is interacted with while locked."
+	
+	// Inputs
+	input Lock(void) : "Locks this prop_interactable, making it uninteractable."
+	input Unlock(void) : "Unlocks this prop_interactable, making it interactable."
+	input Press(void) : "Presses this prop_interactable as if someone interacted with it."
+	
+	input EnableUseInteraction(void) : "Enables use interaction if it was disabled before."
+	input DisableUseInteraction(void) : "Disables use interaction if it was enabled before."
+	input EnableTouchInteraction(void) : "Enables touch interaction if it was disabled before."
+	input DisableTouchInteraction(void) : "Disables touch interaction if it was enabled before."
+	input StartIgnoringCommandsWhenLocked(void) : "Starts ignoring commands when this prop_interactable is locked."
+	input StopIgnoringCommandsWhenLocked(void) : "Stops ignoring commands when this prop_interactable is locked."
+	input EnableRadiusInteract(void) : "Enables radius use."
+	input DisableRadiusInteract(void) : "Disables radius use."
+
+	// Outputs
+	output OnPressed(void) : "Fired whenever the prop is interacted with."
+	output OnLockedUse(void) : "Fired whenever the button is interacted with while locked."
+	output OnIn(void) : "Fired whenever the prop completes its 'In' animation."
+	output OnOut(void) : "Fired whenever the prop completes its 'Out' animation."
+]
+
+@BaseClass base(Targetname, Global, Angles, Studiomodel, BreakableProp, RenderFields, DXLevelChoice, BaseFadeProp) = BasePropPhysics
 [ 
 	spawnflags(flags) = 
 	[
@@ -7567,7 +7645,7 @@
 	input IgniteHitboxFireScale(float) : "Ignite, with a parameter hitbox fire scale."
 ]
 
-@PointClass base(BasePropPhysics, RenderFields) studioprop() sphere(fademindist) sphere(fademaxdist) = prop_physics :
+@PointClass base(BasePropPhysics) studioprop() sphere(fademindist) sphere(fademaxdist) = prop_physics :
 	"A prop that physically simulates as a single rigid body. It can be constrained to other physics objects using hinges "+
 	"or other constraints. It can also be configured to break when it takes enough damage. "+
 	"Note that the health of the object will be overridden by the health inside the model, to ensure consistent health game-wide. "+
@@ -7628,11 +7706,11 @@
 		0: "Not Solid"
 	]	
 
-	InitialOwner(string) : "Target Entity" : : "Name of the entity that this ornament should attach to, at startup."
+	InitialOwner(target_destination) : "Target Entity" : : "Name of the entity that this ornament should attach to, at startup."
 	
 	// Inputs
-	input SetAttached(string) : "Attach the ornament to a different entity. Parameter should be the name of entity to attach to."
-	input Detach(string) : "Detach from the Target Entity and become invisible. The ornament can be re-attached with the SetAttached input."
+	input SetAttached(target_destination) : "Attach the ornament to a different entity. Parameter should be the name of entity to attach to."
+	input Detach(void) : "Detach from the Target Entity and become invisible. The ornament can be re-attached with the SetAttached input."
 ]
 
 @PointClass base(Targetname, Angles, Studiomodel) studioprop() = simple_physics_prop :
@@ -8537,6 +8615,7 @@
 		4 : "[4] Ignore Z" : 0
 		8 : "[8] Use 'Ignore' flags for origin instead of angles" : 0
 		16 : "[16] Use new teleportation rules (smoother movement)" : 1
+		32 : "[32] Don't change target's angles" : 0
 	]
 	
 	MeasureAttachment(string) : "Measurement Attachment" : "" : "Only useful for the ''Attachment point'' measurement type. This attachment should be on the Entity to Measure and measurements will correspond to its position and angles."
