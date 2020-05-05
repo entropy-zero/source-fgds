@@ -54,15 +54,9 @@
 	output OnOutOfGrenades(ehandle) : "Fires when we run out of grenades. Passes our last grenade, if there is one."
 ]
 
-@BaseClass base(GrenadeUser) = PlayerCompanion
+// For classes which didn't support grenades before, but now do
+@BaseClass base(GrenadeUser) = NewGrenadeUser
 [
-	input OutsideTransition(void) : "Use this input to teleport the NPC to a hintnode with the Player Squad Transition Point hint type."
-	input EnableAlwaysTransition(void) : "Enable the 'always transition' behavior"
-	input DisableAlwaysTransition(void) : "Disable the 'always transition' behavior"
-	
-	input EnableSpeakWhileScripting(void) : "Allow this NPC to speak responses while in a scripted sequence or while StartScripting is active."
-	input DisableSpeakWhileScripting(void) : "Cancels this NPC's ability to speak responses while in a scripted sequence or while StartScripting is active if it was previously enabled by EnableSpeakWhileScripting."
-	
 	input SetGrenadeCapabilities(integer) : "Sets this NPC's grenade capabilities."
 	SetGrenadeCapabilities(choices) : "Grenade capabilities" : "None" : "Controls this NPC's capability to throw grenades or use their weapon's secondary ability (energy balls/SMG grenades)." =
 	[
@@ -71,6 +65,16 @@
 		2 : "Alt-firing"
 		3 : "Grenades + Alt-firing"
 	]
+]
+
+@BaseClass base(NewGrenadeUser) = PlayerCompanion
+[
+	input OutsideTransition(void) : "Use this input to teleport the NPC to a hintnode with the Player Squad Transition Point hint type."
+	input EnableAlwaysTransition(void) : "Enable the 'always transition' behavior"
+	input DisableAlwaysTransition(void) : "Disable the 'always transition' behavior"
+	
+	input EnableSpeakWhileScripting(void) : "Allow this NPC to speak responses while in a scripted sequence or while StartScripting is active."
+	input DisableSpeakWhileScripting(void) : "Cancels this NPC's ability to speak responses while in a scripted sequence or while StartScripting is active if it was previously enabled by EnableSpeakWhileScripting."
 	
 	AlwaysTransition(choices) : "Always transition" : "No" : "If yes, this NPC will always teleport to a Player Squad Transition Point if they're not within the trigger_transition volume." =
 	[
@@ -1844,6 +1848,8 @@
 
 	output OnCrateShotDownBeforeDropoff(float) : "Fires when the container was shot down before it dropped off soldiers. The parameter contains the number of soldiers that weren't successfully dropped off."
 	output OnCrateShotDownAfterDropoff(void) : "Fires when the container was shot down after it dropped off soldiers."
+	
+	output OnSpawnNPC(ehandle) : "Fires when this dropship spawns a NPC."
 
 ]
 
@@ -2160,7 +2166,7 @@
 ]
 
 
-@NPCClass base(BaseNPC,RappelNPC,GrenadeUser) studio() = npc_metropolice : "MetroPolice"
+@NPCClass base(BaseNPC,RappelNPC,NewGrenadeUser) studio() = npc_metropolice : "MetroPolice"
 [
 	model(studio) : "Model" : "models/police.mdl" : "The model of this npc_metropolice. Keep in mind this overrides the 'Efficient' spawnflag which sets the model to police_cheaple.mdl."
 
@@ -3407,6 +3413,12 @@
 	actor(target_name_or_class) : "Actor(s) to affect" : "" : "NPC(s) that should engage in fear behavior."
 	target(target_destination) : "Fear Target" : "" : "Target to fear. Only applies whenever the actors' relationship to the target is D_FR. Supports wildcards and can be a classname or an entity name."
 	
+	SearchType(choices) : "Search Type" : 0 : "How to search for the entities using the targetname." = 
+	[
+		0 : "Entity Name"
+		1 : "Classname"
+	] 
+	
 	StartActive(choices) : "Start Active" : 0 =
 	[
 		0 : "No"
@@ -4235,6 +4247,7 @@
 	[
 		1 : "[1] Use Master's values" : 1
 		2 : "[2] Is Master" : 0
+		4 : "[4] Spawn even if player meets all requirements" : 0
 		8 : "[8] Fallback to Health Vial" : 0
 		16 : "[16] Alternate master" : 0
 	]
@@ -4863,6 +4876,12 @@
 		3 : "Planted"
 		4 : "Triggered (bounce, explode on touch)"
 		5 : "Physgun Launch (no bounce, explode on touch)"
+	]
+	
+	CheapWarnSound(choices) : "Cheap Warn Sound" : 0 : "Makes the mine's warn sound use generic sound methods instead of a sound patch, which is cheaper and doesn't continuously take up audio channels. Use this for areas with tons of active mines." =
+	[
+		0: "No"
+		1: "Yes"
 	]
 	
 	Modification(choices): "Modification" : 0 : "'Normal' is default Combine behavior. 'Cavern' detonates earlier in its jump, and has a different default skin." = 
@@ -5677,6 +5696,17 @@
 	output OnAgitated( void ) : "Fired when the grub is stepped on or damaged."
 	output OnDeath( void ) : "Fired when the grub is killed."
 	output OnDeathByPlayer( void ) : "Fired when the grub is killed (only by the player)."
+]
+
+@NPCClass base(Item) studio() = item_grubnugget :
+	"Antlion grub nugget"
+[
+	model(choices) : "Denomination" : "models/grub_nugget_small.mdl" : "Sets the nugget's size." =
+	[
+		"models/grub_nugget_small.mdl" : "Small"
+		"models/grub_nugget_medium.mdl" : "Medium"
+		"models/grub_nugget_large.mdl" : "Large"
+	]
 ]
 
 

@@ -661,6 +661,8 @@
 		0 : "No"
 		1 : "Yes"
 	]
+	
+	BaseSpeedModifier(float) : "Speed Modifier" : "1.0" : "Multiplies how far a NPC travels while moving. Does not affect the animation itself."
 
 	// Outputs
 	output OnDamaged(void) : "Fired when this NPC takes damage."
@@ -729,6 +731,11 @@
 	input SetForceServerRagdoll(bool) : "Sets whether we should be a serverside ragdoll when we die."
 	
 	input SetThinkNPC(float) : "Sets this entity's general think function to CallNPCThink. This is only necessary if it was disabled by SetThinkNull before."
+	
+	input SetDistLook(float) : "Manually sets this NPC's sight distance. Pass '0' to reset."
+	input SetDistTooFar(float) : "Manually sets the distance in which NPCs will consider a target too far to attack. Pass '0' to reset."
+	
+	input SetSpeedModifier(float) : "Set a float value to multiply movement animation speed."
 	
 	input SetHintGroup(string) : "Sets this NPC's hint group."
 ]
@@ -1185,6 +1192,8 @@
 	input FadeIn(integer) : "Fades the sound up to full volume over a specified number of seconds, with a range from 0 to 100 seconds."
 	input FadeOut(integer) : "Fades the sound to silence over a specified number of seconds, with a range from 0 to 100 seconds."
 	input SetSound(string) : "Sets the sound this ambient_generic should play."
+	
+	output OnSoundFinished(void) : "Fires when the sound finishes playing. NOTE: This sound should be set to pause when the game is paused."
 ]
 
 @SolidClass base(Targetname, Parentname, RenderFields) sphere(DisappearDist) sphere(DisappearMaxDist) = func_lod : 
@@ -5071,11 +5080,25 @@
 		
 	landmark(target_destination) : "Local Destination Landmark" : : "If specified, then sounds offset from the speaker by their initial offset from this landmark. Only applicable in Speaker mode."
 	
-	PitchScale(float) : "Pitch Scale" : "1.0" : "Scales the pitch of transmitted sounds."
+	PitchScale(float) : "Pitch Scale" : "1.0" : "Scales the pitch of transmitted sounds. Only applicable in Speaker mode."
+	
+	channel(choices) : "Channel" : 6 : "Sets the channel which sounds should transmit as. Only applicable in Speaker mode." =
+	[
+ 		0 : "CHAN_AUTO"
+ 		1 : "CHAN_WEAPON"
+ 		2 : "CHAN_VOICE"
+ 		3 : "CHAN_ITEM"
+ 		4 : "CHAN_BODY"
+ 		5 : "CHAN_STREAM"
+ 		6 : "CHAN_STATIC"
+ 		7 : "CHAN_VOICE2"
+	]
 
 	// Inputs
 	input SetSpeakerName(target_destination) : "Set the microphone to output through a different speaker entity."
 	input SetDSPPreset(integer) : "Sets our DSP preset."
+	input SetPitchScale(float) : "Sets the pitch scale."
+	input SetChannel(integer) : "Sets the channel."
 
 	// Outputs
 	output SoundLevel(float) : "Fired in Measuring mode whenever the sound level changes."
@@ -6679,9 +6702,9 @@
 	SetDamageBitsAdded(integer) : "Damage Bits Added" : 0 : "Adds bits to the damage type. See a damage type keyvalue in an entity like filter_damage_type to get their bit representation."
 	SetDamageBitsRemoved(integer) : "Damage Bits Removed" : 0 : "Removes bits from the damage type. See a damage type keyvalue in an entity like filter_damage_type to get their bit representation."
 
-	NewAttacker(string) : "New Attacker" : : "If specified, the damage will be credited to this entity instead of the original attacker."
-	NewInflictor(string) : "New Inflictor" : : "If specified, the damage's inflictor will be changed to this entity instead of the original inflictor."
-	NewWeapon(string) : "New Weapon" : : "If specified, the damage's weapon will be changed to this entity instead of the original weapon."
+	NewAttacker(target_destination) : "New Attacker" : : "If specified, the damage will be credited to this entity instead of the original attacker."
+	NewInflictor(target_destination) : "New Inflictor" : : "If specified, the damage's inflictor will be changed to this entity instead of the original inflictor."
+	NewWeapon(target_destination) : "New Weapon" : : "If specified, the damage's weapon will be changed to this entity instead of the original weapon."
 
 	damagefilter(filterclass) : "Secondary Filter" : "" : "An optional secondary filter that can be used for either whose damage could be modified or as a real damage filter for whether any damage should be taken at all."
 	SecondaryFilterMode(choices) : "Secondary Filter Mode" : 0 : "Sets whether the secondary filter should be treated as a redirected damage filter (must pass to take actual damage) instead of just permitting modification." =
@@ -6949,7 +6972,7 @@
 		2097152 : "[2097152] Physgun is NOT allowed to pick this up." : 0 
 		4194304 : "[4194304] Physgun is NOT allowed to punt this object." : 0
 		8388608: "[8388608] Prevent motion enable on player bump" : 0
-		16777216: "[16777216] Radius pickup (easer to pickup)" : 0
+		16777216: "[16777216] Radius pickup (easier to pickup)" : 0
 	]
 	
 	Damagetype(choices) : "Impact Damage Type" : 0 =
@@ -7561,7 +7584,7 @@
 		1024: "[1024] Prevent motion enable on player bump" : 0
 		4096: "[4096] Debris with trigger interaction" : 0
 		8192: "[8192] Force server-side (Multiplayer only)" : 0
-		16384: "[16384] Radius pickup (easer to pickup)" : 0
+		16384: "[16384] Radius pickup (easier to pickup)" : 0
 		1048576: "[1048576] Physgun can ALWAYS pick up. No matter what." : 0
 		2097152: "[2097152] No collisions" : 0
 		8388608: "[8388608] Zombies can't swat" : 0
@@ -7823,6 +7846,7 @@
 	[
 		1 : "[1] Physics damage decals" : 0
 		2 : "[2] Take damage from held objects" : 0
+		4 : "[4] Play break sound" : 0
 	]
 	health(integer) : "Health" : 5 : "The amount of damage the surface takes before breaking."
 	fragility(integer) : "Fragility" : 100 : "If the 'Surface Type' is set to Glass, this value sets how fragile the glass pieces are after the surface has been broken."
@@ -8339,6 +8363,12 @@
 	Timeout(float) : "Timeout" : "0" : "The time, in seconds, to wait after player enters the trigger before firing the OnTimeout output, 0 = never."
 	
 	UseLOS(choices) : "Require LOS" : 0 : "If enabled, the player must have full LOS to the target entity in order to count as ''looking''." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
+	LookEntityCaller(choices) : "Use look entity as caller" : 0 : "When firing OnTrigger, use the triggered look entity as the output's caller. Useful for when multiple look targets exist." =
 	[
 		0 : "No"
 		1 : "Yes"
@@ -8970,7 +9000,7 @@
 		1 : "Yes"
 	]
 
-	texturename(material) : "Texture Name" : "effects/flashlight001"
+	texturename(material) : "Texture Name" : "effects/flashlight001" : "The texture which should be used. Please note that env_projectedtexture uses .vtf files directly and does not use .vmt files. The material browser is only available here to assist with finding textures since materials typically have the same name as their textures."
 	textureframe(integer) : "Texture Frame" : 0 : "Sets the frame of the projected texture. Only relevant if the texture is animated/has multiple frames."
 	
 	alwaysdraw(Choices)		: "Always Draw" : 0 : "Always draws the projected texture, regardless of whether the player can see its frustum. Use this for projected textures that can be seen on monitors or in the skybox." =
