@@ -939,6 +939,7 @@
 
 		450: "Headcrab: Burrow Point"
 		451: "Headcrab: Exit Pod Point"
+		452: "Headcrab: Temporal Teleport Point"
 
 		//500: "Roller: Patrol Point"
 		//501: "Roller: Cleanup Spot"
@@ -961,6 +962,9 @@
 		1003: "HL1 World: Alien Blood"
 	
 //		1100: "CS Hostage: Escape Point"
+
+		2000: "Beast: Home"
+		2001: "Beast: Frustration Point"
 	]
 
 	hintactivity(string) : "Hint Activity" : "" : "Activity associated with this hint node. Various parts of the NPC AI play this activity at times. i.e. Actbusy nodes will play this activity when an NPC acts busy on the node."
@@ -7690,12 +7694,21 @@
 	]
 	angleOverride(string) : "Override Animation" : "" : "Filled in by the engine via wc_update_entity, do not edit by hand except to clear."
 
+	health(integer) : "Health" : 100 : "The amount of gib damage the ragdoll takes before gibbing. Set to 0 for inifinite health."
+	EmitScent(choices) : "Should Emit Scent" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
 	input StartRagdollBoogie(float) : "Begins ragdoll boogie effect. Parameter override = number of seconds to boogie."
 	input Wake(void) : "Wakes up this physics object, if it is sleeping."
 	input Sleep(void) : "Puts this physics object to sleep. It will wake if given the Wake input, or if force is applied to it. Note that physics objects go to sleep automatically after coming to rest for a while, so you don't really need to use this."
 	input EnableMotion(void) : "Enable physics motion/collision response."
 	input DisableMotion(void) : "Disable physics motion/collision response."
 	input FadeAndRemove(float) : "Fade out then remove (kill) self. Parameter override = duration of fade"
+	input EnableScent(void) : "Start emitting scents that will attract predators to this ragdoll."
+	input DisableScent(void) : "Start emitting scents that will attract predators to this ragdoll."
 ]
 
 @PointClass base(prop_dynamic_base) studioprop() = prop_dynamic_ornament :
@@ -8208,6 +8221,7 @@
 [
 	targetname(target_source) : "Name"
 	map(string) : "New Map Name"
+	demomap(string) : "New Demo Map Name"
 	landmark(target_destination) : "Landmark Name"
 	spawnflags(flags) =
 	[

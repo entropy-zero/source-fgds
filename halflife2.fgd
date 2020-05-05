@@ -8,11 +8,8 @@
 //=============================================================================
 
 @include "base.fgd"
-@include "halloween.fgd"
-@include "flaregun.fgd"
-@include "bullsquid.fgd"
-@include "beast.fgd"
-@include "wilson.fgd"
+
+// NOTE: E:Z2 @includes were moved to the bottom to get rid of those pesky errors
 
 //-------------------------------------------------------------------------
 //
@@ -149,6 +146,7 @@
 		0 : "Default"
 		1 : "Xen"
 		2 : "Radioactive/Slimy"
+		3 : "Temporal"
 	]
 ]
 
@@ -259,6 +257,12 @@
 
 @NPCClass base(Targetname) studio("models/Weapons/w_grenade.mdl") = npc_grenade_frag : "Hand Grenade"
 [
+	RebelColor(choices) : "Rebel Color" : 0 : "Turns the grenade's glow and sprite trail yellow." = 
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+
 	input SetTimer(float) : "This input makes the grenade live, and specifies how many seconds before it explodes."
 ]
 
@@ -364,7 +368,7 @@
 		64 : "[64] Start Inactive" : 0
 		128 : "[128] Fast Retire" : 0
 		256 : "[256] Out of Ammo" : 0
-		512 : "[512] Citizen modified (Friendly)" : 0
+		512 : "[512] Citizen modified (Un-Friendly)" : 0
 		1024 : "[1024] No Light Sprite" : 0
 	]
 
@@ -386,6 +390,43 @@
 	output OnTipped(void) : "Turret has been tipped over and is inactive."
 	output OnPhysGunPickup(void) : "Picked up with physgun"
 	output OnPhysGunDrop(void) : "Released by physgun"
+]
+
+@PointClass base(npc_turret_floor, EZVariable) studio( "models/props/turret_01.mdl" ) frustum(FOV,0,Range,255 0 0,-1) = npc_arbeit_turret_floor : "Arbeit Floor Turret"
+[
+	TurretType(choices) : "Turret Type" : 0 : "Type of turret to use" =
+	[
+		0 : "Normal"
+		1 : "Beast (Defective)"
+	]
+	
+	Range(float) : "Range" : "1200" : "The turret's range. Pretend the frustum is coming from the light/eye."
+	FOV(float) : "Field of View" : "60" : "The turret's FOV. Pretend the frustum is coming from the light/eye."
+	
+	EyeLightEnabled(choices) : "Eye Light Enabled" : 0 : "Toggles the built-in projected texture light, based on the Range and FOV values." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
+	Laser(choices) : "Laser Enabled" : 1 : "Toggles the turret's laser. The laser goes as far as the Range value." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
+	static(choices) : "Static" : 0 : "Makes the turret immobile." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
+	// Inputs
+	input TurnOnEyeLight(void) : "Turns on the eye light if it was disabled before."
+	input TurnOffEyeLight(void) : "Turns off the eye light if it was enabled before."
+	
+	input TurnOnLaser(void) : "Turns on the laser if it was disabled before."
+	input TurnOffLaser(void) : "Turns off the laser if it was enabled before."
 ]
 
 @BaseClass base(BaseNPC) = VehicleDriverNPC
@@ -1114,10 +1155,12 @@
 [
 	additionalequipment(choices) : "Weapons" : "weapon_smg1" =
 	[
+		"weapon_ar2_proto" : "Prototype AR2"
 		"weapon_ar2" : "AR2"
 		"weapon_shotgun" : "Shotgun"
 		//"weapon_stunstick" : "Stun Stick"
 		"weapon_smg1" : "SMG1"
+		"weapon_smg2" : "MP5K"
 		"weapon_rpg" : "RPG"
 		"weapon_crossbow" : "Crossbow"
 		"0" : "Nothing"
@@ -1287,6 +1330,12 @@
 	"A smaller, faster, strider that can pursue the player into buildings."
 [
 	FollowTarget(target_destination) : "Strider to Follow" : "" : "The name of the strider that this hunter should follow."
+	
+	CompanionHunter(choices) : "Companion Hunter" : 0 : "Allows this hunter to regenerate health and do other long-term companion-related things." = 
+	[
+		0 : "No"
+		1 : "Yes"
+	]
 	
     // Inputs
     input FollowStrider(target_destination) : "Sets the name of the strider that this hunter should follow."
@@ -1473,6 +1522,8 @@
 		0 : "No"
 		1 : "Yes"
 	]
+	
+	OverrideZapRange(float) : "Override Zap Range" : -1 : "How far away can this vortigaunt attack from? If -1, defaults to the max range - defined by the convar sk_vortigaunt_zap_range or sk_zombigaunt_zap_range for zombie vorts. Defaults for those are 1200 and 360 respectively. For close range brutes, I would recommend something like 256 to 384."
 
 	// Inputs
 	input EnableArmorRecharge(void) : "Allow armor recharging on players"
@@ -1493,9 +1544,9 @@
 	output OnPlayerUse(void) : "Fires when a player +USEs the vortigaunt."
 ]
 
-@NPCClass base(TalkNPC, PlayerCompanion, EZVariable) studio() = npc_zombigaunt : "Zombigaunt"
+@NPCClass base(TalkNPC, PlayerCompanion, EZVariable) studio("models/zombie/zombigaunt.mdl") = npc_zombigaunt : "Zombigaunt"
 [
-	model(studio) : "World model" : "models/zombigaunt.mdl"
+	model(studio) : "World model" : ""
 
 	ArmorRechargeEnabled(choices) : "Allow Armor Recharging" : 1 =
 	[
@@ -2086,6 +2137,12 @@
 		131072 : "[131072] Don't use any damage effects" : 0
 		262144 : "[262144] Use Air Nodes" : 0
 		1048576 : "[1048576] No Danger Sounds" : 0
+	]
+	
+	Nemesis(choices): "Nemesis Manhack" : "0" : "Makes this manhack use E:Z1 colors and become hostile to both the Combine and the Resistance." =
+	[
+		0 : "No"
+		1 : "Yes"
 	]
 
 	input DisableSwarm(void) : "Disable the manhack swarm behavior."
@@ -3284,6 +3341,7 @@
 	[
 		0 : "Default (Standard)"
 		1 : "Combat"
+		10 : "Beast Zombies (E:Z2)"
 	]
 
 	safezone(target_destination) : "Combat Safe Zone" : "" : "Only for combat actbusy. Lets you specify a volume which is the 'safe zone'. The Combat ActBusy will cancel if any enemies are seen in the safe zone."
@@ -3728,6 +3786,9 @@
 		1 : "Downtrodden"
 		2 : "Refugee"
 		3 : "Rebel"
+		5 : "Rebel Brute"
+		6 : "Longfall"
+		7 : "Arctic"
 		4 : "Unique"
 	]
 	
@@ -4804,16 +4865,21 @@
 		5 : "Physgun Launch (no bounce, explode on touch)"
 	]
 	
-	Modification(choices): "Citizen modified" : 0 : "'Normal' is default Combine behavior. 'Cavern' detonates earlier in its jump, and has a different default skin." = 
+	Modification(choices): "Modification" : 0 : "'Normal' is default Combine behavior. 'Cavern' detonates earlier in its jump, and has a different default skin." = 
 	[
 		0 : "Normal"
 		1 : "Cavern"
 	]
 	
-	Friendly(choices): "Start Friendly" : 0 : "Makes this combine_mine friendly, as if it was placed by the player." = 
+	Friendly(choices): "Start Placed By Player" : 0 : "Makes this combine_mine start as if it was placed by the player." = 
 	[
 		0 : "No"
 		1 : "Yes"
+	]
+	
+	spawnflags(Flags) =
+	[
+		1 : "[1] Hacked (Citizen mine)" : 0
 	]
 	
 	enemyfilter(filterclass) : "Enemy Filter" : : "Makes this combine_mine target specific NPCs as enemies. It will also use its default targets unless ''Filter Exclusive'' is enabled."
@@ -5658,6 +5724,7 @@
 @NPCClass base(BaseNPC) studio("models/weapons/w_slam.mdl") = npc_tripmine : "Active Tripmine SLAM" []
 @PointClass base(Weapon) studio("models/weapons/w_mp5k.mdl") = weapon_smg2 : "SMG2" []
 @PointClass base(Weapon) studio("models/weapons/w_xengrenade.mdl") = weapon_hopwire : "Xen Grenade" []
+@PointClass base(Weapon) studio("models/weapons/w_irifle.mdl") sphere(fademindist) sphere(fademaxdist) = weapon_ar2_proto : "Assault Rifle 2 Prototype" []
 
 // Human Error APC
 @PointClass base(BaseDriveableVehicle) studioprop() = prop_vehicle_drivable_apc :
@@ -5675,6 +5742,13 @@
 	input DisableMove(void) : "Disable APC movement, machine gun and rockets only."
 	input EnableMove(void) : "Enable APC movement."
 	input ForcePlayerOut(void) : "Force the player out of the vehicle."
+	
+	input ConstrainEntity(target_destination) : "Constrains an entity to the back of the vehicle."
+	input UnconstrainEntity(void) : "Unconstrains any entity constrained to the back of the vehicle."
+	input ConstraintBroken(void) : "Breaks the constraint of any entity constrained to the back of the APC."
+	
+	input HeadlightOn(void) : "Turns on the headlight."
+	input HeadlightOff(void) : "Turns off the headlight."
 ]
 
 @BaseClass base(BaseNPC) = BaseFlora
@@ -5696,4 +5770,23 @@
 @PointClass base(Origin,Targetname) = info_remarkable : "An object in the world such that characters seeing it will speak a TLK_REMARK concept"
 [
 	contextsubject(string) : "Subject context" : "" : "Text to put in the SUBJECT context of the TLK_REMARK fired upon sighting this object." 
+	StartDisabled(choices) : "Start Disabled" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
+	input Enable(void) : "Enable remarks"
+	input Disable(void) : "Disable remarks - can force override with ForceRemark(Entity)"
 ]
+
+//=============================================================================
+
+@include "halloween.fgd"
+@include "flaregun.fgd"
+@include "bullsquid.fgd"
+@include "beast.fgd"
+@include "nemesis.fgd"
+@include "wilson.fgd"
+
+//=============================================================================
