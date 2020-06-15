@@ -270,6 +270,11 @@
 	input SetTimer(float) : "This input makes the grenade live, and specifies how many seconds before it explodes."
 ]
 
+@NPCClass base(Targetname) studio("models/Weapons/w_xengrenade.mdl") = npc_grenade_hopwire : "Hand Grenade"
+[
+	input SetTimer(float) : "This input makes the grenade live, and specifies how many seconds before it explodes."
+]
+
 
 @NPCClass base(BaseNPC) sphere(sightdist) studio("models/combine_soldier.mdl") = npc_combine_cannon : "Combine Cannon"
 [
@@ -396,7 +401,7 @@
 	output OnPhysGunDrop(void) : "Released by physgun"
 ]
 
-@PointClass base(npc_turret_floor, EZVariable) studio( "models/props/turret_01.mdl" ) frustum(FOV,0,Range,255 0 0,-1) = npc_arbeit_turret_floor : "Arbeit Floor Turret"
+@PointClass base(npc_turret_floor, EZVariable, ResponseContext) studio( "models/props/turret_01.mdl" ) frustum(FOV,0,Range,255 0 0,-1) = npc_arbeit_turret_floor : "Arbeit Floor Turret"
 [
 	TurretType(choices) : "Turret Type" : 0 : "Type of turret to use" =
 	[
@@ -431,6 +436,8 @@
 	
 	input TurnOnLaser(void) : "Turns on the laser if it was disabled before."
 	input TurnOffLaser(void) : "Turns off the laser if it was enabled before."
+	
+	input EnableSilently(void) : "Enables the turret silently, not deploying immediately."
 ]
 
 @BaseClass base(BaseNPC) = VehicleDriverNPC
@@ -4495,6 +4502,15 @@
 		1  : "[1] Start inactive" : 0
 	]
 
+	// New with EZ2
+	TripmineClass(choices) : "Tripmine class" : "CLASS_NONE": "Classification used to determine what this tripmine views as friendly. Only three classes have been added to the FGD as they are the ones I think will be useful, but if you turn smart edit off any valid CLASS will work." =
+	[
+		"CLASS_NONE" : "CLASS_NONE - Rebel tripmines"
+		"CLASS_COMBINE" : "CLASS_COMBINE"
+		"CLASS_COMBINE_NEMESIS" : "CLASS_COMBINE_NEMESIS"
+	] 	
+	TripmineColor(color255) : "Tripmine Color" : "255, 192, 0, 64" : "Color of the tripmine laser. Combine lasers are 255, 55, 52. Rebel lasers are 255, 192, 0. Nemesis lasers are 0, 255, 255."
+	
 	// Inputs
 	input Activate(void) : "Recharge to full"
 
@@ -5751,9 +5767,14 @@
 
 	input Explode( void ) : "This input detonates the SLAM."
 ]
-@NPCClass base(BaseNPC) studio("models/weapons/w_slam.mdl") = npc_tripmine : "Active Tripmine SLAM" []
+
 @PointClass base(Weapon) studio("models/weapons/w_mp5k.mdl") = weapon_smg2 : "SMG2" []
 @PointClass base(Weapon) studio("models/weapons/w_xengrenade.mdl") = weapon_hopwire : "Xen Grenade" []
+
+@PointClass base(Weapon) studio("models/weapons/w_xengrenade.mdl") = weapon_endgame : "Ending Xen Grenade" 
+[
+	output OnEndGame(void) : "Fired when the endgame Xen Relay Grenade is thrown."
+]
 @PointClass base(Weapon) studio("models/weapons/w_irifle.mdl") sphere(fademindist) sphere(fademaxdist) = weapon_ar2_proto : "Assault Rifle 2 Prototype" []
 
 // Human Error APC
