@@ -1396,7 +1396,11 @@
 	staging_ent_names(target_destination) : "Staging Position Names"  : "" : "All entities with this name will be considered staging positions for the throw behavior."
 	priority_grab_name(target_destination) : "Priority Name For Grabbing" : "" : "If any entities named this are present, the advisor will preferentially pick them up for throwing at the player."
 	
-
+	AdvisorFlyer(choices) : "Starts flying" : 0 : "Spawn this advisor with the capability to freely float around." = 
+	[
+		0 : "No"
+		1 : "Yes"
+	]
 
 	output OnPickingThrowable(void) : "Fires just before I pick something to hurl"
 	output OnThrowWarn(void)        : "Fires when I trigger the warning green glow before tossing"
@@ -1407,6 +1411,8 @@
 	input WrenchImmediate(target_destination) : "Advisor will immediately start levitating all objects with this name"
 	input SetStagingNum(integer): "Advisor will stage this many objects at once, then barrage the player."
 	input PinPlayer(target_destination) : "Advisor will wrench the player to this point in the air. Use a null param to let go."
+	input StopPinPlayer(target_destination) : "Advisor will stop pinning the player."	
+	
 	input BeamOn(target_destination) : "Start a psychic-TK effect beam from the advisor to the specified object. You must remember to turn it off later."
 	input BeamOff(target_destination) : "Turn off a psychic-TK effect beam from the advisor to the specified object."
 	
@@ -1414,6 +1420,9 @@
 	input ELightOff(void) : "Turn off my entity light."
 	
 	input DoNothing(void) : ""
+	
+	input StartFlying(void) : "Allow the advisor to freely fly around like a scanner."
+	input StopFlying(void) : "Lock the advisor in place."
 ]
 
 
