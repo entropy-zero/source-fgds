@@ -1100,6 +1100,7 @@
 	detailmaterial(string) : "Detail material file" : "detail/detailsprites" : "Material for detail sprites to use for drawing detail props"
 	vscriptlanguage(choices) : "VScript language" : 0 : "Sets the script language this map should use for entity scripts." =
 	[	
+		-1 : "None (Disable VScript)"
 		0 : "Default (Squirrel)"
 		//1 : "GameMonkey (Unsupported)"
 		2 : "Squirrel"
@@ -3813,6 +3814,7 @@
 		128: "[128] Small Sound Radius" : 0
 		256: "[256] Medium Sound Radius" : 0
 		512: "[512] Large Sound Radius" : 1
+		1024: "[1024] Client-side animation" : 0
 	]
 	_minlight(string) : "Minimum Light Level" : : "The minimum level of ambient light that hits this brush."
 	dmg(integer) : "Blocking Damage" : 0 : "Damage done to any entity that blocks the rotation, per frame."
@@ -5014,6 +5016,12 @@
 	LowerRandomBound(string) : "Minimum Random Interval" : : "If 'Use Random Time' is set, this is the minimum time between timer fires. The time will be a random number between this and the 'Maximum Random Interval'."
 	UpperRandomBound(string) : "Maximum Random Interval" : : "If 'Use Random Time' is set, this is the maximum time between timer fires. The time will be a random number between the 'Minimum Random Interval' and this."
 	RefireTime(string) : "Refire Interval" : : "If 'Use Random Time' isn't set, this is the time between timer fires, in seconds."
+	
+	UseBoundsForTimerInputs(choices) : "Limit Timer Inputs" : 0 : "Allows the Minumum/Maximum Random Interval keyvalues to limit the total timer value when it receives AddToTimer or SubtractFromTimer inputs." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
 
 	// Inputs
 	input RefireTime(integer) : "Set a new Refire Interval."
@@ -7129,10 +7137,10 @@
 	input TurnOff(void) : "Disable the controller." 
 ]
 
-@PointClass base(Targetname, Angles) sphere(expradius) studioprop() = physics_cannister : 
+@PointClass base(Targetname, Angles, Studiomodel) sphere(expradius) studioprop() = physics_cannister : 
 	"A physically simulated gas cannister that can have its cap shot off, at which point gas will start escaping and cause the cannister to fly around. If it takes enough damage, it will explode."
 [
-	model(studio) : "World model" : "models/fire_equipment/w_weldtank.mdl"
+	model(studio) : "World model" : "models\props_c17\canister01a.mdl"
 	spawnflags(flags) = 
 	[
 		1 : "[1] Start Asleep" : 0
@@ -7147,7 +7155,7 @@
 	fuel(string) : "Fuel Seconds" : "12.0" : "The amount of time that gas leaks from the cannister before being considered empty."
 	rendercolor(color255) : "Smoke Color (R G B)" : "255 255 255"
 	renderamt(integer) : "Smoke Alpha (0 - 255)" : 128
-	gassound(sound) : "Thruster Sound" : "TODO_REPLACE_WITH_SOUNDSCRIPT_FOR_MAPBASE_PLEASE" : "The sound played when the gas is escaping from the cannister."
+	gassound(sound) : "Thruster Sound" : "PhysicsCannister.ThrusterLoop" : "The sound played when the gas is escaping from the cannister."
 
 	// Inputs
 	input Activate(void) : "Start gas escaping from the cannister."
@@ -7590,7 +7598,7 @@
 	health(integer) : "Health" : 0 : "Number of points of damage to take before breaking.  0 means don't break."	
 ]
 
-@PointClass base(prop_dynamic_base) studioprop() = prop_interactable :
+@PointClass wirebox(use_mins, use_maxs) base(prop_dynamic_base) studioprop() = prop_interactable :
 	"A prop designed to be interacted with like a button. It has all of the properties of prop_dynamic without having to use an accompanying func_door or func_button."
 [
 	spawnflags(flags) =
@@ -7614,6 +7622,9 @@
 	InSequence(string) : "In Sequence" : "" : "Optional sequence to play when the button is pressed, representing a button going 'in'."
 	OutSequence(string) : "Out Sequence" : "" : "Optional sequence to play after the button was interacted with and the cooldown is finished, representing a button coming back 'out' after an 'in' animation."
 	LockedSequence(string) : "Locked Sequence" : "" : "Optional sequence to play when the prop_interactable is interacted with while locked."
+	
+	use_mins(vector) : "+USE Mins" : "-0 -0 -0" : "Optional box for only permitting +USE interactions within. The prop_interactable should not change its angles while this is used."
+	use_maxs(vector) : "+USE Maxs" : "0 0 0" : "Optional box for only permitting +USE interactions within. The prop_interactable should not change its angles while this is used."
 	
 	// Inputs
 	input Lock(void) : "Locks this prop_interactable, making it uninteractable."
