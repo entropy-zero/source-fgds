@@ -4413,7 +4413,8 @@
 	output OnUnblockedClosing(void) : "Fired when the door is unblocked while closing."
 	output OnUnblockedOpening(void) : "Fired when the door is unblocked while opening."
 	output OnLockedUse(void) : "Fired when the player uses the door, but it is locked."
-
+	output OnKicked(void) : "(EZ2) Fired when the door is kicked open."
+	
 	// Inputs
 	input Open(void) : "Open the door, if it is not fully open."
 	input OpenAwayFrom(target_destination) : "Open the door away from the specified entity."
