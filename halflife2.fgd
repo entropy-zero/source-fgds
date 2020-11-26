@@ -1453,6 +1453,9 @@
 	input StartFlying(void) : "Allow the advisor to freely fly around like a scanner."
 	input StopFlying(void) : "Lock the advisor in place."
 	
+	input StartPsychicShield(void) : "Activate the advisor's psychic shield, which prevents all damage."
+	input StopPsychicShield(void) : "Deactivate the advisor's psychic shield."
+	
 	input EnablePinFailsafe(void) : "Drop the player after 10 seconds when pinning."
 	input DisablePinFailsafe(void) : "Never drop the player when pinning."
 ]
@@ -5844,6 +5847,37 @@
 	output OnEndGame(void) : "Fired when the endgame Xen Relay Grenade is thrown."
 ]
 @PointClass base(Weapon) studio("models/weapons/w_irifle.mdl") sphere(fademindist) sphere(fademaxdist) = weapon_ar2_proto : "Assault Rifle 2 Prototype" []
+
+// New items for EZ2
+@PointClass base(Item) studioprop() = item_hopwire_holder : "Xen Grenade Holder"
+[
+	body(choices) : "Grenades" : 7 =
+	[
+		0 : "None"
+		1 : "1/3"
+		3 : "2/3"
+		7 : "Full"
+		5 : "2/3 (Middle empty)"
+	]
+	
+	RemoveWhenEmpty(choices) : "Remove when empty" : 1 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
+	model(studio) : "Model" : "models/items/xen_grenade_holder001a.mdl"
+
+	// Inputs
+	input SetSlot1(bool) : "Sets whether Slot 1 is occupied"
+	input SetSlot2(bool) : "Sets whether Slot 2 is occupied"
+	input SetSlot3(bool) : "Sets whether Slot 3 is occupied"
+	
+	output OnPickupSlot1(void) : "Fires when a grenade in Slot 1 is picked up."
+	output OnPickupSlot2(void) : "Fires when a grenade in Slot 2 is picked up."
+	output OnPickupSlot3(void) : "Fires when a grenade in Slot 3 is picked up."
+	output OnEmpty(void) : "Fires when the holder becomes empty."
+]
 
 // Human Error APC
 @PointClass base(BaseDriveableVehicle) studioprop() = prop_vehicle_drivable_apc :
