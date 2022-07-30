@@ -73,6 +73,30 @@
 	input SetPoliceGoal(target_destination) : "Causes the NPC to be assigned to the specified ai_goal_police. Pass no parameter to clear the goal."
 ]
 
+// E:Z2 - New "surrender" behavior
+@BaseClass = SurrenderingNPC
+[
+	cansurrender(choices) : "Can Surrender" : 1 : "Whether or not this NPC should be allowed to use surrender behavior, such as when +USE'd by the player while unarmed. (note that this is different from when citizens throw their weapons and run)" =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+	
+	surrenderstate(choices) : "Surrender State" : 0 : "The surrender behavior state this NPC should spawn with. Allows citizens to spawn already surrendered." =
+	[
+		0 : "None"
+		1 : "Start surrendered (standing)"
+		2 : "Start surrendered (on ground)"
+	]
+	
+	surrenderflags(choices) : "Surrender Flags" : 0 : "This NPC's surrender behavior flags. Any combination of bits is allowed." =
+	[
+		0 : "None"
+		1 : "[1] Surrender automatically"
+		2 : "[2] No resistance (stay surrendered)"
+	]
+]
+
 @BaseClass base(NewGrenadeUser) = PlayerCompanion
 [
 	input OutsideTransition(void) : "Use this input to teleport the NPC to a hintnode with the Player Squad Transition Point hint type."
@@ -151,12 +175,13 @@
 
 @BaseClass = EZVariable
 [
-	EZvariant(choices) : "Variant" : 0 : "Sets this NPC's 'variant', e.g. slimy zombies that create radioactive puddles." =
+	EZvariant(choices) : "Variant" : 0 : "Sets this entity's 'variant', e.g. slimy zombies that create radioactive puddles." =
 	[
 		0 : "Default"
 		1 : "Xen"
 		2 : "Radioactive/Slimy"
 		3 : "Temporal"
+		4 : "Arbeit"
 	]
 ]
 
@@ -288,6 +313,7 @@
 	strength(float) : "Pull Strength" : "256" : "Strength of the vortex's pull"
 	node_radius(float) : "Node Radius" : "256" : "Radius to look for nodes to spawn at"
 	consume_radius(float) : "Consume Radius" : "48" : "Consume entities within this radius"
+	pull_fade_in(float) : "Pull Fade-In Time" : "0" : "If specified, the vortex's strength will start at zero and increase to full strength over this period of time."
 	
 	spawnflags(Flags) =
 	[
@@ -997,7 +1023,7 @@
 
 
 
-@NPCClass base(TalkNPC, PlayerCompanion, RappelNPC, PolicingNPC) studio() = npc_citizen : "Citizen"
+@NPCClass base(TalkNPC, PlayerCompanion, RappelNPC, PolicingNPC, SurrenderingNPC) studio() = npc_citizen : "Citizen"
 [
 
 	spawnflags(Flags) =
@@ -1053,6 +1079,8 @@
 		5 : "Rebel Brute"
 		6 : "Longfall"
 		7 : "Arctic"
+		8 : "Arbeit Employee"
+		9 : "Arbeit Security Guard"
 		4 : "Unique"
 	]
 
@@ -1122,6 +1150,12 @@
 		0 : "No"
 		1 : "Yes"
 	]
+	
+	suppressivefiredisabled(choices) : "Use suppressive fire" : 0 : "Should this citizen try to shoot in the direction of the enemy (or at nearby props) if they do not have line of sight." =
+	[
+		0 : "Yes"
+		1 : "No"
+	]	
 
     //Inputs
 	input RemoveFromPlayerSquad(void) : "Remove from player squad, instantly."
@@ -1243,6 +1277,18 @@
 		"1" : "Yes"
 	]
 
+	DontPickupWeapons(choices) : "Prevent picking up weapons?" : "1" : "By default, Combine soldiers are not allowed to pick up weapons they find on the ground. Change this to 'No' to enable citizen-like weapon pickup behavior." =
+	[
+		0 : "No"
+		1 : "Yes"	
+	]
+	
+	DisablePlayerUse(choices) : "Ignore player use" : "0" : "Prevent this Combine soldier from responding to player +USE. Can be changed with inputs EnablePlayerUse and DisablePlayerUse." =
+	[
+		0 : "No"
+		1 : "Yes"	
+	]
+
 	// Inputs
 	input LookOn(void) : "Look normally"	
 	input LookOff(void) : "Don't look for myself, use other squad member's eyes"
@@ -1256,6 +1302,12 @@
 	input DeployManhack(void) : "Deploys a manhack immediately if one is available."
 	input AddManhacks(integer) : "Adds to the number of manhacks this NPC has available."
 	input SetManhacks(integer) : "Sets the number of manhacks this NPC has available."
+
+	input EnableWeaponPickup(void) : "Enable Weapon Pickup"
+	input DisableWeaponPickup(void) : "Disable Weapon Pickup"
+	
+	input EnablePlayerUse(void) : "Enable this soldier to respond to player's +USE"
+	input DisablePlayerUse(void) : "Prevent this soldier from responding to player's +USE"
 
 	// Outputs
 	output OutManhack(ehandle) : "Fired the moment when this NPC spawns a manhack. Passes the manhack."
@@ -1464,11 +1516,16 @@
 	input StartFlying(void) : "Allow the advisor to freely fly around like a scanner."
 	input StopFlying(void) : "Lock the advisor in place."
 	
+	input SetFollowTarget(target_destination) : "Set a target to stick to in a similar fashion to advisor flyers."
+	
 	input StartPsychicShield(void) : "Activate the advisor's psychic shield, which prevents all damage."
 	input StopPsychicShield(void) : "Deactivate the advisor's psychic shield."
 	
 	input EnablePinFailsafe(void) : "Drop the player after 10 seconds when pinning."
 	input DisablePinFailsafe(void) : "Never drop the player when pinning."
+	
+	input DetachRightArm(void) : "Detach the advisor's right arm."
+	input DetachLeftArm(void) : "Detach the advisor's left arm."
 ]
 
 
@@ -3867,6 +3924,7 @@
 		5 : "Rebel Brute"
 		6 : "Longfall"
 		7 : "Arctic"
+		8 : "Arbeit Employee"
 		4 : "Unique"
 	]
 	
@@ -3941,6 +3999,7 @@
 		"hunters_to_run_over" : "Ep2 Counter: Hunters to run over before they dodge"
 		"friendly_fire_override" : "Mapbase: Friendly fire override (on = enabled, off = disabled, dead = no override)"
 		"antlion_noinstakill" : "Mapbase: Antlion-to-soldier insta-kill disabled"
+		"citizens_no_auto_variant" : "EZ2: New citizen types don't automatically set variants to 'Arbeit'"
 	]
 ]
 
@@ -4272,7 +4331,7 @@
 // Items
 //
 //-------------------------------------------------------------------------
-@BaseClass color(0 0 200) base(Targetname, Angles, Shadow) sphere(fademindist) sphere(fademaxdist) = Item
+@BaseClass color(0 0 200) base(Targetname, Angles, Shadow, EZVariable) sphere(fademindist) sphere(fademaxdist) = Item
 [
 	output OnPlayerTouch(void) : "Fires when the player touches this object"
 
@@ -4337,6 +4396,7 @@
 	DesiredAmmo357(float) : "Desired 357 Ammo Ratio" : "0" : "A ratio from 0 to 1. Attempt to fill the player up to this percentage of his max ammo carrying capacity."
 	DesiredAmmoCrossbow(float) : "Desired Crossbow Ammo Ratio" : "0" : "A ratio from 0 to 1. Attempt to fill the player up to this percentage of his max ammo carrying capacity."
 	DesiredAmmoAR2_AltFire(float) : "Desired AR2 Alt-fire Ammo Ratio" : "0" : "A ratio from 0 to 1. Attempt to fill the player up to this percentage of his max ammo carrying capacity."
+	DesiredAmmoAR2_XenGrenade(float) : "Desired Xen Grenade Ammo Ratio" : "0" : "A ratio from 0 to 1. Attempt to fill the player up to this percentage of his max ammo carrying capacity."
 
 	// Inputs
 	input CalculateType(void) : "Force the dynamic resupply to calculate which item it should spawn."
@@ -4395,7 +4455,7 @@
 	input Skin(integer) : "Changes the model skin to the specified number."
 ]
 
-@PointClass base(BasePropPhysics, Targetname, Angles, DamageFilter, BaseFadeProp) studioprop() = item_item_crate : "Item Crate" // studio("models/items/item_item_crate.mdl")
+@PointClass base(BasePropPhysics, Targetname, Angles, DamageFilter, BaseFadeProp, EZVariable) studioprop() = item_item_crate : "Item Crate" // studio("models/items/item_item_crate.mdl")
 [
 	model(studio) : "Model" : "models/items/item_item_crate.mdl" : "The model of this item_item_crate. Only works when this crate's appearance is set to use a custom model."
 
@@ -4435,6 +4495,30 @@
 	output OnCacheInteraction(void) : "This output fires when the player proves they have 'found' this crate. Fires on: Picked up by +USE, Picked up by Physcannon, Punted by Physcannon, Broken."
 	
 	output OnItem(ehandle) : "Fires for each item spawned by this crate."
+]
+
+@PointClass base(item_item_crate) studioprop() = item_creature_crate : "Creature Crate"
+[
+	model(studio) : "Model" : "models/animal_box/animal_box.mdl" : "The model of this item_creature_crate. Only works when this crate's appearance is set to use a custom model."
+	
+	idlesound(sound) : "Sound Name" : "NPC_PitDrone.Idle" : "Idle soundscript for the crate to play every 5 to 20 seconds."
+	
+	// Overriding the EZVariant property to change the default to Xen
+	EZvariant(choices) : "Variant" : 1 : "Sets this entity's 'variant', e.g. slimy zombies that create radioactive puddles." =
+	[
+		0 : "Default"
+		1 : "Xen"
+		2 : "Radioactive/Slimy"
+		3 : "Temporal"
+		4 : "Arbeit"
+	]
+	
+	CrateAppearance(choices) : "Crate Appearance" : 2 =
+	[
+		0 : "Default Appearance"
+		1 : "Radar Beacon Crate"
+		2 : "Custom Model (use model keyvalue)"
+	]
 ]
 
 //@PointClass base(item_item_crate) studioprop() = item_item_crate_custom : "Identical to item_item_crate, except a 'Model' keyvalue is added for convenience when using a custom model." +
@@ -4519,6 +4603,12 @@
 	
 	SetAmmo1(integer) : "Ammo 1 Override" : 0 : "Overrides the amount of primary ammo this weapon has. Be sure to set 'Preserve ammo values when picked up' for this to be maintained upon pickup."
 	SetAmmo2(integer) : "Ammo 2 Override" : 0 : "Overrides the amount of secondary ammo this weapon has. Be sure to set 'Preserve ammo values when picked up' for this to be maintained upon pickup."
+	
+	ShouldFirstDraw(choices) : "Play first draw animation" : 1 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
 	
 	// Inputs
 	input EnablePlayerPickup(void) : "Enables player pickup if it was previously disabled."
@@ -5108,51 +5198,73 @@
 	
 	AchievementEvent(choices) : "Achievement Event" : 0 : "Named event is sent to the achievement system when this entity receives a 'FireEvent' input." =
 	[
-		"ACHIEVEMENT_EVENT_EZ_HULA_01"      : "[EZ] Hula Doll: Doll 1"
-		"ACHIEVEMENT_EVENT_EZ_HULA_02"      : "[EZ] Hula Doll: Doll 2"
-		"ACHIEVEMENT_EVENT_EZ_HULA_03"      : "[EZ] Hula Doll: Doll 3"
-		"ACHIEVEMENT_EVENT_EZ_HULA_04"      : "[EZ] Hula Doll: Doll 4"
-		"ACHIEVEMENT_EVENT_EZ_HULA_05"      : "[EZ] Hula Doll: Doll 5"
-		"ACHIEVEMENT_EVENT_EZ_HULA_06"      : "[EZ] Hula Doll: Doll 6"
-		"ACHIEVEMENT_EVENT_EZ_HULA_07"      : "[EZ] Hula Doll: Doll 7"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_RG01"      : "[EZ2] Radio Guy Recording Box 1"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_RG02"      : "[EZ2] Radio Guy Recording Box 2"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_RG03"      : "[EZ2] Radio Guy Recording Box 3"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_RG04"      : "[EZ2] Radio Guy Recording Box 4"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_RG05"      : "[EZ2] Radio Guy Recording Box 5"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_RG06"      : "[EZ2] Radio Guy Recording Box 6"	
+
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_CC01"      : "[EZ2] Clone Cop Recording Box 1"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_CC02"      : "[EZ2] Clone Cop Recording Box 2"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_CC03"      : "[EZ2] Clone Cop Recording Box 3"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_CC04"      : "[EZ2] Clone Cop Recording Box 4"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_CC05"      : "[EZ2] Clone Cop Recording Box 5"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_CC06"      : "[EZ2] Clone Cop Recording Box 6"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_CC07"      : "[EZ2] Clone Cop Recording Box 7"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_CC08"      : "[EZ2] Clone Cop Recording Box 8"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_CC09"      : "[EZ2] Clone Cop Recording Box 9"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_CC10"      : "[EZ2] Clone Cop Recording Box 10"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_CC11"      : "[EZ2] Clone Cop Recording Box 11"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_CC12"      : "[EZ2] Clone Cop Recording Box 12"
+		"ACHIEVEMENT_EVENT_EZ2_RECORDING_CC13"      : "[EZ2] Clone Cop Recording Box 13"
+
+		"ACHIEVEMENT_EVENT_EZ2_WILSONCLOSET_01"     : "[EZ2] Wilson Closet 1"
+		"ACHIEVEMENT_EVENT_EZ2_WILSONCLOSET_02"     : "[EZ2] Wilson Closet 2"
+		"ACHIEVEMENT_EVENT_EZ2_WILSONCLOSET_03"     : "[EZ2] Wilson Closet 3"
+		"ACHIEVEMENT_EVENT_EZ2_WILSONCLOSET_04"     : "[EZ2] Wilson Closet 4"
+		"ACHIEVEMENT_EVENT_EZ2_WILSONCLOSET_05"     : "[EZ2] Wilson Closet 5"
+		"ACHIEVEMENT_EVENT_EZ2_WILSONCLOSET_06"     : "[EZ2] Wilson Closet 6"
+		"ACHIEVEMENT_EVENT_EZ2_WILSONCLOSET_07"     : "[EZ2] Wilson Closet 7"
+		"ACHIEVEMENT_EVENT_EZ2_WILSONCLOSET_08"     : "[EZ2] Wilson Closet 8"
+		"ACHIEVEMENT_EVENT_EZ2_WILSONCLOSET_09"     : "[EZ2] Wilson Closet 9"
+		"ACHIEVEMENT_EVENT_EZ2_WILSONCLOSET_10"     : "[EZ2] Wilson Closet 10"
+		"ACHIEVEMENT_EVENT_EZ2_WILSONCLOSET_11"     : "[EZ2] Wilson Closet 11"
+		"ACHIEVEMENT_EVENT_EZ2_WILSONCLOSET_12"     : "[EZ2] Wilson Closet 12"
+		"ACHIEVEMENT_EVENT_EZ2_WILSONCLOSET_13"     : "[EZ2] Wilson Closet 13"
 		
-		"ACHIEVEMENT_EVENT_EZ_NXTGEN_01"      : "[EZ] LG Tag: 1"
-		"ACHIEVEMENT_EVENT_EZ_NXTGEN_02"      : "[EZ] LG Tag: 2"
-		"ACHIEVEMENT_EVENT_EZ_NXTGEN_03"      : "[EZ] LG Tag: 3"
-		"ACHIEVEMENT_EVENT_EZ_NXTGEN_04"      : "[EZ] LG Tag: 4"
-		"ACHIEVEMENT_EVENT_EZ_NXTGEN_05"      : "[EZ] LG Tag: 5"
-		"ACHIEVEMENT_EVENT_EZ_NXTGEN_06"      : "[EZ] LG Tag: 6"
-		"ACHIEVEMENT_EVENT_EZ_NXTGEN_07"      : "[EZ] LG Tag: 7"
+		"ACHIEVEMENT_EVENT_EZ2_START_GAME"          : "[EZ2] Begin tracking difficulty achievements"
+		"ACHIEVEMENT_EVENT_EZ2_BEAT_GAME"           : "[EZ2] Complete difficulty achievements"
+
+		"ACHIEVEMENT_EVENT_EZ2_COMPLETE_C0"         : "[EZ2] Complete Chapter 0"
+		"ACHIEVEMENT_EVENT_EZ2_COMPLETE_C1"         : "[EZ2] Complete Chapter 1"
+		"ACHIEVEMENT_EVENT_EZ2_COMPLETE_C2"         : "[EZ2] Complete Chapter 2"
+		"ACHIEVEMENT_EVENT_EZ2_COMPLETE_C3"         : "[EZ2] Complete Chapter 3"
+		"ACHIEVEMENT_EVENT_EZ2_COMPLETE_C4"         : "[EZ2] Complete Chapter 4"
+		"ACHIEVEMENT_EVENT_EZ2_COMPLETE_C4a"        : "[EZ2] Complete Chapter 4a"
+		"ACHIEVEMENT_EVENT_EZ2_COMPLETE_C5"         : "[EZ2] Complete Chapter 5"
+		"ACHIEVEMENT_EVENT_EZ2_COMPLETE_C6"         : "[EZ2] Complete Chapter 6"
 		
-		"ACHIEVEMENT_EVENT_EZ_POEM_01"      : "[EZ] Poem Piece: Part 1"
-		"ACHIEVEMENT_EVENT_EZ_POEM_02"      : "[EZ] Poem Piece: Part 2"
-		"ACHIEVEMENT_EVENT_EZ_POEM_03"      : "[EZ] Poem Piece: Part 3"
-		"ACHIEVEMENT_EVENT_EZ_POEM_04"      : "[EZ] Poem Piece: Part 4"
-		"ACHIEVEMENT_EVENT_EZ_POEM_05"      : "[EZ] Poem Piece: Part 5"
-		"ACHIEVEMENT_EVENT_EZ_POEM_06"      : "[EZ] Poem Piece: Part 6"
-		"ACHIEVEMENT_EVENT_EZ_POEM_07"      : "[EZ] Poem Piece: Part 7"
-		"ACHIEVEMENT_EVENT_EZ_POEM_08"      : "[EZ] Poem Piece: Part 8"
-		"ACHIEVEMENT_EVENT_EZ_POEM_09"      : "[EZ] Poem Piece: Part 9"
-		"ACHIEVEMENT_EVENT_EZ_POEM_10"      : "[EZ] Poem Piece: Part 10"
+		"ACHIEVEMENT_EVENT_EZ2_MEET_WILSON"         : "[EZ2] Met Wilson"
+		"ACHIEVEMENT_EVENT_EZ2_DELIVER_WILSON"      : "[EZ2] Brought Wilson to the upload station at Arbeit 3"
+		"ACHIEVEMENT_EVENT_EZ2_STILL_ALIVE"         : "[EZ2] Still Alive"
+		"ACHIEVEMENT_EVENT_EZ2_START_XENT"          : "[EZ2] Player entered Xentarium (Used to track 'Now there are two of them!')"
+		"ACHIEVEMENT_EVENT_EZ2_SPARE_CC"            : "[EZ2] Player refused to kill Clone Cop"
+		"ACHIEVEMENT_EVENT_EZ2_MIND_WIPE"           : "[EZ2] Player did not resist the mind wipe"
+		"ACHIEVEMENT_EVENT_EZ2_SUPERFUTURE"         : "[EZ2] Player saw the future mirage"
+		"ACHIEVEMENT_EVENT_EZ2_XENGRENADE_HELICOPTER" : "[EZ2] Player neutralized Judith's helicopter"
 		
-		"ACHIEVEMENT_EVENT_EZ_PCAN"				  : "[EZ] Pick up a can"
-		"ACHIEVEMENT_EVENT_EZ_TCAN"				  : "[EZ] Put it in a trashcan"
-		"ACHIEVEMENT_EVENT_EZ_SCHISM"				: "[EZ] Find the reference"
-		"ACHIEVEMENT_EVENT_EZ_SLUCK"				: "[EZ] Suckers Luck"
-		"ACHIEVEMENT_EVENT_EZ_SEATER"				: "[EZ] Sneak Eater"
-		"ACHIEVEMENT_EVENT_EZ_DEXPLOIT"			: "[EZ] Deadly Exploit"
-		"ACHIEVEMENT_EVENT_EZ_KCOP"         : "[EZ] Kindergarten Cop"
-		"ACHIEVEMENT_EVENT_EZ_VDT"				  : "[EZ] Very Dead Tenant"
-		"ACHIEVEMENT_EVENT_EZ_SALIVE"				: "[EZ] Still Alive"
-		"ACHIEVEMENT_EVENT_EZ_MGUN"				  : "[EZ] More Gun"
-		"ACHIEVEMENT_EVENT_EZ_BSJOB"				: "[EZ] Baby Sittin' Job"
-		"ACHIEVEMENT_EVENT_EZ_SOLO"				  : "[EZ] Solo"
-		"ACHIEVEMENT_EVENT_EZ_OUTBREAK"			: "[EZ] OUTBREAK OUTBREAK"
-		"ACHIEVEMENT_EVENT_EZ_VSOUL"				: "[EZ] Vort Soul"
-		"ACHIEVEMENT_EVENT_EZ_OICE"				  : "[EZ] On Ice"
-		"ACHIEVEMENT_EVENT_EZ_PE"           : "[EZ] Plosive Expletive"
+		"ACHIEVEMENT_EVENT_EZ2_SQUAD_CH1"           : "[EZ2] Count player squadmates for Chapter 1 achievement"		
+		"ACHIEVEMENT_EVENT_EZ2_SQUAD_CH2"           : "[EZ2] Count player squadmates for Chapter 2 achievement"		
+
+		"ACHIEVEMENT_EVENT_EZ2_MEET_CC"       : "[EZ2] Met Clone Cop"
 		
-		"ACHIEVEMENT_EVENT_EZ_VVOICE"       : "[EZ] Vague Voices"
+		"ACHIEVEMENT_EVENT_EZ2_DELIVER_LONEWOLF"    : "[EZ2] Reunite with Lone Wolf in Chapter 6"
+		
+		"ACHIEVEMENT_EVENT_EZ2_SEE_BOREALIS"    	: "[EZ2] Find the Borealis at Arbeit 3"
+		
+		"ACHIEVEMENT_EVENT_EZ2_START_KILL_BEAST"    : "[EZ2] Begin tracking the Chapter 3 boss fight"
+		"ACHIEVEMENT_EVENT_EZ2_START_KILL_ADVISOR"  : "[EZ2] Begin tracking the advisor boss fight"
 	]
 
 	// Inputs
@@ -5393,9 +5505,14 @@
 		1 : "Yes"
 	]
 
+	// Inputs
 	input DisableMove(void) : "Disable APC movement, machine gun and rockets only."
 	input EnableMove(void) : "Enable APC movement."
 	input ForcePlayerOut(void) : "Force the player out of the vehicle."
+	
+	// Outputs
+	output OnOverturned(void) : "Fired when the APC is overturned."
+	output OnObjectAttached(void) : "Fired when an object is attached to the APC."
 ]
 
 @SolidClass base(Targetname, Origin, Angles, EnableDisable) = info_apc_missile_hint :
@@ -5974,5 +6091,7 @@
 @include "beast.fgd"
 @include "nemesis.fgd"
 @include "wilson.fgd"
+@include "arbeit_helicopter.fgd"
+@include "css_weapons_in_hl2.fgd"
 
 //=============================================================================

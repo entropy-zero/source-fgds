@@ -418,6 +418,12 @@
 		0 : "No"
 		1 : "Yes"
 	]
+	
+	// Inputs
+	input SetDisplacementImpossible(bool) : "Sets whether this entity can be consumed by the Xen grenades or the Displacement Pistol."
+	
+	// Outputs
+	output OnConsumed(void) : "Fired when this entity is consumed by a Xen grenade."
 ]
 
 @BaseClass base(Targetname, DamageFilter, Shadow, DisplacementFields) = Breakable
@@ -572,9 +578,17 @@
 	]
 	pressuredelay(float) : "Pressure Delay" : 0 : "Delay, in seconds, after 'broken' by pressure before breaking apart (allows for sound to play before breaking apart)."
 	
+	BreakOnPlayerKick(choices) : "Break on kicked by player" : 0 : "If hit by the player's kick attack, break instantly." =
+	[
+		0:	"No"
+		1:	"Yes"
+	]
+	
 	// Inputs
 	input SetInteraction(integer) : "Adds an interaction to this entity."
 	input RemoveInteraction(integer) : "Removes an interaction from this entity."
+	input EnableBreakOnPlayerKick(void) : "Set this breakable prop to break instantly on player kick."
+	input DisableBreakOnPlayerKick(void) : "Set this breakable prop to not break instantly on player kick."
 ]
 
 // Fields shared by both NPCs and players.
@@ -973,7 +987,7 @@
 
 		450: "Headcrab: Burrow Point"
 		451: "Headcrab: Exit Pod Point"
-		452: "Headcrab: Temporal Teleport Point"
+		452: "Headcrab: Temporal Teleport Point (E:Z2)"
 
 		//500: "Roller: Patrol Point"
 		//501: "Roller: Cleanup Spot"
@@ -997,8 +1011,9 @@
 	
 //		1100: "CS Hostage: Escape Point"
 
-		2000: "Beast: Home"
-		2001: "Beast: Frustration Point"
+		2000: "Beast: Home (E:Z2)"
+		2001: "Beast: Frustration Point (E:Z2)"
+		2002: "Surrender: Idle Point (E:Z2)"
 	]
 
 	hintactivity(string) : "Hint Activity" : "" : "Activity associated with this hint node. Various parts of the NPC AI play this activity at times. i.e. Actbusy nodes will play this activity when an NPC acts busy on the node."
@@ -4486,7 +4501,21 @@
 		0 : "No"
 		1 : "Yes"
 	]
-
+	
+	kickspeed(integer) : "Kicked Speed" : 500 : "The speed at which the door moves when kicked by the player."
+	
+	openonkick(choices) : "Open On Kick" : 1 : "Should this door open when kicked by the player?" =
+	[
+		0 : "Don't open when kicked"
+		1 : "Open when kicked"
+	]
+	
+	unlockonkick(choices) : "Unlock On Kick" : 0 : "Should this door unlock when kicked by the player?" =
+	[
+		0 : "Don't unlock when kicked"
+		1 : "Unlock when kicked"
+	]
+	
 	spawnflags(flags) =
 	[
 		256 : "[256] Start with collision disabled" : 0
@@ -7147,6 +7176,23 @@
 ]
 
 @PointClass base(Targetname, Parentname, DamageTypes) sphere(DamageRadius) = point_hurt :
+	"An entity that does damage to all entities in a radius around itself, with a specified delay." +
+	"If 'Target Entity' is specified, the damage is only done to that entity."
+[
+	DamageTarget(target_destination) : "Target Entity" : "" : "If specified, only this entity will take damage. Otherwise, all entities within the Radius will take damage."
+	
+	DamageRadius(float) : "Radius" : 256 : "All entities within this radius of this entity will take damage. If a 'Target Entity' is specified, only that entity will take damage."
+	Damage(integer) : "Damage" : 5 : "Damage done to all affected entities each time this entity fires."
+	DamageDelay(float) : "Delay" : 1 : "Delay between refires, in seconds."
+
+	// Inputs
+	input Hurt(void) : "Force a single fire, damaging either the Target Entity or all entities within the radius."
+	input TurnOn(void) : "Enable this entity. It will start damaging entities everytime it fires, and refire based upon the specified Delay."
+	input TurnOff(void) : "Disable this entity. It will stop damaging entities."
+	input Toggle(void) : "Toggle this entity between On/Off state."
+]
+
+@PointClass base(Targetname, Parentname, DamageTypes) sphere(DamageRadius) = zombie_goo_puddle :
 	"An entity that does damage to all entities in a radius around itself, with a specified delay." +
 	"If 'Target Entity' is specified, the damage is only done to that entity."
 [
